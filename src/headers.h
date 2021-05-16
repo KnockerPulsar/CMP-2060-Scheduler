@@ -11,6 +11,8 @@
 #include <unistd.h>
 #include <signal.h>
 
+#include "definitions.h" // Custom definitions
+
 typedef short bool;
 #define true 1
 #define false 0
@@ -60,3 +62,11 @@ void destroyClk(bool terminateAll)
         killpg(getpgrp(), SIGINT);
     }
 }
+
+typedef struct processData
+{
+    int arrivaltime;
+    int priority;
+    int runningtime;
+    int id;
+} processData;

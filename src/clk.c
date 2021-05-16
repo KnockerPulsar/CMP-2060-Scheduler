@@ -10,10 +10,10 @@
 int shmid;
 
 /* Clear the resources before exit */
-void cleanup(int signum)
+void cleanup(int sig_num)
 {
     shmctl(shmid, IPC_RMID, NULL);
-    printf("Clock Terminating!...\n");
+    printf("\nClock Terminating!..."); // Is even safe to use printf inside a signal handler?
     exit(0);
 }
 
