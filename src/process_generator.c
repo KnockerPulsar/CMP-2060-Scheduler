@@ -3,6 +3,29 @@
 #include <string.h>
 
 /* 
+The process generator should simulate a real operating systems as follows:
+    •[DONE]It reads the input files containing the information about processes (check the
+    input/output section below).
+
+    • It gets the chosen scheduling algorithm and its parameters, if any, as
+    command line arguments. These arguments are specified after the name of the
+    program in the system command line, and their values are passed to the
+    program during execution.
+
+    •[DONE] It initiates and creates the scheduler and clock processes.
+
+    •[DONE] It creates a data structure for processes and fills it with its parameters (e.g.
+    arrival time, running time, etc.)
+
+    • It sends the information to the scheduler at the appropriate time (when a
+    process arrives), so that the scheduler places it correctly in its turn among
+    the existing processes. A process should not be sent to the scheduler until it
+    arrives to the system.
+    
+    • At the end of simulation, the process generator should clear all IPC resources.
+ */
+
+/* 
 To view a dynamic array in VSCode, you can do *ptr@numElements in the watch window.
 So for a dynamic string called "line" with a length of 12, you do *line@12.
 If you ask for more elements than the pointer has allocated for itself, the extra elements
@@ -51,7 +74,7 @@ int main(int argc, char *argv[])
     if (strlen(pDataPath) < 5)
     {
         perror("\nPROCESS GENERATOR ERRO: INVALID FILE PATH");
-        exit(-1);
+        exit(1);
     }
 
     processData *pData = ReadSimData(pDataPath);
@@ -60,7 +83,7 @@ int main(int argc, char *argv[])
 // 2. Read the chosen scheduling algorithm and its parameters, if there are any from the argument list.
 #pragma region TODO2
     int schedulingAlg = atoi(argv[2]);
-// TODO: PUT A FUNCTION HERE TO READ IN THE REQUIRE PARAMETERS FOR EACH SCHEDULING ALGORITHM.
+// TODO: PUT A FUNCTION HERE TO READ IN THE REQUIRED PARAMETERS FOR EACH SCHEDULING ALGORITHM.
 #pragma endregion TODO2
 
 // 3. Initiate and create the scheduler and clock processes.
@@ -96,28 +119,60 @@ int main(int argc, char *argv[])
     }
 #pragma endregion TODO3
 
-// 4. Use this function after creating the clock process to initialize clock.
-#pragma region TODO4
-    initClk();
-
-    // To get time use this function.
-    // Checks every 0.5 seconds if the clock changed
-    // Don't have another way of checking the clock on my mind right now
-    while (1)
-    {
-        static int prevTime = 0;
-        int x = getClk();
-        if (prevTime != x)
-            printf("Current Time is %d\n", x);
-        prevTime = x;
-
-        usleep(0.5 * 10e5);
-    }
-#pragma endregion TODO4
-
     // TODO Generation Main Loop
+    // 4. Use this function after creating the clock process to initialize clock.
     // 5. Create a data structure for processes and provide it with its parameters.
     // 6. Send the information to the scheduler at the appropriate time.
+
+#pragma region TODO456
+    initClk();
+
+    // Checks every 0.5 seconds if the clock changed
+    // Don't have another way of checking the clock on my mind right now
+
+    // Maybe we can cause the clock to signal to the scheduler and process generator on ticking?
+    // Another solution is to use a busy wait loop
+    while (1)
+    {
+        static int prevTime = 0, currProcess = 0;
+        char intStrBuffer[8], messageBuffer[128] = "PROCESS WITH PID ";
+
+        int x = getClk(); // To get time use this function.
+
+        if (prevTime != x)
+            {printf("\n[%d] ", x); fflush(stdout);}
+        prevTime = x;
+
+        // If a proccess arrives (arrivalTime == currentTime)
+        if (x == pData[currProcess].arrivaltime)
+        {
+            // Fork a process, get its PID and put it in place of processData.id
+            // exec(proccess.exe).
+
+            pData[currProcess].id = fork();
+            if (pData[currProcess].id == 0) // Child
+            {
+                execl("process.exe", "process.exe", (char *)NULL);
+            }
+            snprintf(intStrBuffer, 8, "%d", pData[currProcess].id);
+            strcat(messageBuffer, intStrBuffer);
+            strcat(messageBuffer, " SPAWNED AT TIME STEP ");
+            snprintf(intStrBuffer, 8, "%d ", x);
+            strcat(messageBuffer, intStrBuffer);
+
+            printf("%s", messageBuffer);
+            // Children shouldn't pass through here.
+
+            // Send this process's data over a message queue (or shared memory if needed)
+            // Sleep until the next tick or busy-wait
+
+            currProcess++;
+        }
+
+        usleep(0.1 * 10e5); // Sleep for 0.1 seconds
+    }
+#pragma endregion TODO456
+
     // 7. Clear clock resources
     destroyClk(true);
 }
@@ -125,7 +180,7 @@ int main(int argc, char *argv[])
 //TODO Clears all resources in case of interruption
 void clearResources(int sig_num)
 {
-    printf("\nINTERRUPTED");
+    printf("\nINTERRUPTED\n");
     killpg(getpgrp(), SIGINT);
     exit(0);
 }
@@ -156,6 +211,7 @@ processData *ReadSimData(char *filePath)
     // Returns the number of chars actually read.
     // A better approach would be to do it dynamically (ie. read line and add to the process data
     // array), but no dynamic arrays :(
+
     while ((readChars = getline(&linePtr, &lineLen, pFile)) != -1)
     {
         if (line[0] == '#')
