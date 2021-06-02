@@ -1,4 +1,4 @@
-#include <queue.h>
+#include "queue.h"
 
 //*This queue is from Data Structures: A PseudocodeApproach with C,Second Edition*//
 //* The refrence we used in the first year in college*//
@@ -39,8 +39,7 @@ bool enqueue(QUEUE *queue, void *itemPtr)
     //Local Definitions
     QUEUE_NODE *newPtr;
     //Statements
-    if (!(newPtr =
-              (QUEUE_NODE *)malloc(sizeof(QUEUE_NODE))))
+    if (!(newPtr = (QUEUE_NODE *)malloc(sizeof(QUEUE_NODE))))
         return false;
     newPtr->dataPtr = itemPtr;
     newPtr->next = NULL;
@@ -87,6 +86,9 @@ Pre queue is pointer to an initialized queue
 Post itemPtr passed back to caller
 Return true if successful; false if underflow
 */
+// mohamed khaled: itemPtr points to the data saved in the queue
+//                     so if we dequeue the pointer will point to grabage(newly freed space)
+
 bool queueFront(QUEUE *queue, void **itemPtr)
 {
     //Statements
@@ -98,6 +100,9 @@ bool queueFront(QUEUE *queue, void **itemPtr)
         return true;
     } // else
 } // queueFront
+
+
+
 
 /*================== queueRear =================
 Retrieves data at the rear of the queue
