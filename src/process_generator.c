@@ -51,9 +51,6 @@ processData *ReadSimData(char *filePath);
 */
 int main(int argc, char *argv[])
 {
-
-// Regions make it possible to fold parts of code, feel free to remove them if they feel intrusive.
-#pragma region CheckInput
     // Input checking
     if (argc < 3)
     {
@@ -61,13 +58,13 @@ int main(int argc, char *argv[])
         exit(-1);
     }
     signal(SIGINT, clearResources);
-#pragma endregion CheckInput
 
-// TODO Initialization
-// Initialization of what exactly? Hmm..
+    // TODO Initialization
+    // Initialization of what exactly? Hmm..
 
-// 1. Read the input files.
-#pragma region TODO1
+    // 1. Read the input files.]
+    /* ============================================================================================= */
+
     char *pDataPath = argv[1];
 
     // File path should be ().txt, so at least 5 chars
@@ -78,16 +75,33 @@ int main(int argc, char *argv[])
     }
 
     processData *pData = ReadSimData(pDataPath);
-#pragma endregion TODO1
 
-// 2. Read the chosen scheduling algorithm and its parameters, if there are any from the argument list.
-#pragma region TODO2
+    // 2. Read the chosen scheduling algorithm and its parameters, if there are any from the argument list.
+    /* ============================================================================================= */
+
     int schedulingAlg = atoi(argv[2]);
-// TODO: PUT A FUNCTION HERE TO READ IN THE REQUIRED PARAMETERS FOR EACH SCHEDULING ALGORITHM.
-#pragma endregion TODO2
 
-// 3. Initiate and create the scheduler and clock processes.
-#pragma region TODO3
+    // TODO: PUT A FUNCTION HERE TO READ IN THE REQUIRED PARAMETERS FOR EACH SCHEDULING ALGORITHM.
+
+
+    // Before forking the scheduler, let's create the message queue we will send the process data over
+
+    // Added a cast to please the compiler, hope it doesn't cause issues
+    int procGenSchedMsqQID = msgget(ftok(PROCGEN_SCHED_QKEY, 'A'), 0666 | IPC_CREAT); 
+    if (procGenSchedMsqQID == -1)
+    {
+        perror("PROCESS GENERATOR: Error in creating the PG_S MQ\n");
+        exit(-1);
+    }
+    else
+    {
+        printf("PROCESS GENERATOR: SCHEDULER MESSAGE QUEUE CREATED SUCCESSFULLY\n");
+    }
+    
+
+    // 3. Initiate and create the scheduler and clock processes.
+    /* ============================================================================================= */
+
     // Child 0 should be the clock, child 1 should be the scheduler process
     int childIndex, pID;
     const int NUM_CHILDREN = 2;
@@ -103,13 +117,13 @@ int main(int argc, char *argv[])
             case ClockChild:
             {
                 printf("Clock child!\n");
-                execl("clk", "clk", (char *)NULL);
+                execl("bin/clk", "clk", (char *)NULL);
                 break;
             }
             case SchedChild:
             {
                 printf("Scheduler child!\n");
-                execl("scheduler", "scheduler", schedulingAlg ,(char *)NULL);
+                execl("bin/scheduler", "scheduler", schedulingAlg ,(char *)NULL);
                 break;
             }
             default:
@@ -117,14 +131,13 @@ int main(int argc, char *argv[])
             }
         }
     }
-#pragma endregion TODO3
 
+    /* ============================================================================================= */
     // TODO Generation Main Loop
     // 4. Use this function after creating the clock process to initialize clock.
     // 5. Create a data structure for processes and provide it with its parameters.
     // 6. Send the information to the scheduler at the appropriate time.
 
-#pragma region TODO456
     initClk();
 
     // Checks every 0.5 seconds if the clock changed
@@ -135,43 +148,23 @@ int main(int argc, char *argv[])
     while (1)
     {
         static int prevTime = 0, currProcess = 0;
-        char intStrBuffer[8], messageBuffer[128] = "PROCESS WITH PID ";
-
         int x = getClk(); // To get time use this function.
 
         if (prevTime != x)
-            {printf("\n[%d] ", x); fflush(stdout);}
+        {
+            printf("\n[%d] ", x);
+            fflush(stdout);
+        }
         prevTime = x;
 
         // If a proccess arrives (arrivalTime == currentTime)
         if (x == pData[currProcess].arrivaltime)
         {
-            // Fork a process, get its PID and put it in place of processData.id
-            // exec(proccess.exe).
-
-            pData[currProcess].id = fork();
-            if (pData[currProcess].id == 0) // Child
-            {
-                execl("process.exe", "process.exe", (char *)NULL);
-            }
-            snprintf(intStrBuffer, 8, "%d", pData[currProcess].id);
-            strcat(messageBuffer, intStrBuffer);
-            strcat(messageBuffer, " SPAWNED AT TIME STEP ");
-            snprintf(intStrBuffer, 8, "%d ", x);
-            strcat(messageBuffer, intStrBuffer);
-
-            printf("%s", messageBuffer);
-            // Children shouldn't pass through here.
-
-            // Send this process's data over a message queue (or shared memory if needed)
-            // Sleep until the next tick or busy-wait
-
-            currProcess++;
+            // Send the process data up to the scheduler
         }
 
         usleep(0.1 * 10e5); // Sleep for 0.1 seconds
     }
-#pragma endregion TODO456
 
     // 7. Clear clock resources
     destroyClk(true);
@@ -241,6 +234,6 @@ processData *ReadSimData(char *filePath)
 
         pIndex++;
     }
-
+    fclose(pFile);
     return pData;
 }
