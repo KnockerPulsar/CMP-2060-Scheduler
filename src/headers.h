@@ -69,17 +69,18 @@ typedef struct processData
     int priority;
     int runningtime;  
     int id;
+    //int remainning_time
 } processData;
 
 // Message buffer for communication between Process Generator & the Scheduler
-struct PG_S_MB
+typedef struct PG_S_MB   // Process Generator Scheduler Message Buffer
 {
     long mtype;
     processData P;
-};
+}PG_S_MB;
 
 // For the scheduler to store the processes' data in
-struct PCB
+typedef struct PCB
 {
     int id; // not pid, this is the number that we get from the process generator
     int pid; // actual pid from getpid()
@@ -87,5 +88,5 @@ struct PCB
     int priority;
     int runningtime;
     int remainingtime;
-};
+}PCB;
 
