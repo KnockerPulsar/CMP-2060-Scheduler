@@ -78,3 +78,14 @@ struct PG_S_MB
     processData P;
 };
 
+// For the scheduler to store the processes' data in
+struct PCB
+{
+    int id; // not pid, this is the number that we get from the process generator
+    int pid; // actual pid from getpid()
+    int arrivaltime;
+    int priority;
+    int runningtime;
+    int remainingtime;
+};
+

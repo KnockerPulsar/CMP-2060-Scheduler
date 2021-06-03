@@ -109,7 +109,7 @@ int main(int argc, char *argv[])
             case SchedChild:
             {
                 printf("Scheduler child!\n");
-                execl("scheduler", "scheduler", (char *)NULL);
+                execl("scheduler", "scheduler", schedulingAlg ,(char *)NULL);
                 break;
             }
             default:

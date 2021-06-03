@@ -1,37 +1,48 @@
 #include "headers.h"
 
+struct PG_S_MB processGenBuffer;
+int PG_S_MQid;
+int sigAlgo;
+// If the PG is sending a new process to the scheduler, it signals it before sending
+// Via the message queue
+void new_process_handler(int signum)
+{
+    int PG_S_recVal = msgrcv(PG_S_MQid, &processGenBuffer, sizeof(processGenBuffer.P), processGenBuffer.mtype, !IPC_NOWAIT);
+    if (PG_S_recVal != -1)
+    {
+        int pid = fork();
+        if (pid == 0) // Child
+        {
+            execl("process", "process", (char *)NULL);
+        }
+        // TODO: Add this newly created process to the PCB
+        
+        // we may need to clear the receive buffer (not sure)
+        // Afterwards, add it to different to whatever DS that's hodling tthe process
+        // This depends on which signal algo we're going to use
+        
+    }
+    signal(SIGUSR1, new_process_handler);
+}
+
+
 int main(int argc, char *argv[])
 {
     initClk();
-    int PG_S_recVal, PG_S_MQid, pid;
+    // if the scheduler receives this signal, it means that the PG is sending it a new process
+    signal(SIGUSR1, new_process_handler);
+    // get the id of the PG_S message queue
+    key_t kid = ftok(PG_S_FN, 'A');
+    PG_S_MQid = msgget(kid, 0666 | IPC_CREAT);
+    processGenBuffer.mtype = getpid() % 10000;
+    sigAlgo = atoi(argv[1]);
     // Just testing if the forking works fine
     printf("Scheduler spawned!\n");
-
-    // Message buffer for communication between process generator and the scheduler
-    // Used to receive new processes from the process generator
-    PG_S_MQid = msgget('A', 0666 | IPC_CREAT);
-    if (PG_S_MQid == -1)
-    {
-        perror("Error in creating the PG_S MQ");
-        exit(-1);
-    }
-    struct PG_S_MB processGenBuffer;
-    processGenBuffer.mtype = getpid() % 10000;
+    
     // Main scheduler loop
     while (1)
     {
-        // Start of by checking if the process generator sent a new process
-        PG_S_recVal = msgrcv(PG_S_MQid, &processGenBuffer, sizeof(processGenBuffer.P), processGenBuffer.mtype, IPC_NOWAIT);
-        // If the scheduler actually receives something
-        if (PG_S_recVal != -1)
-        {
-            pid = fork();
-            if (pid == 0) // Child
-            {
-                execl("process.exe", "process.exe", (char *)NULL);
-            }
-        }
-        
+       
     }
     
     //TODO: implement the scheduler.
