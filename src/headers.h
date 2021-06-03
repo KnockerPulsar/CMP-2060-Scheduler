@@ -67,6 +67,6 @@ typedef struct processData
 {
     int arrivaltime;
     int priority;
-    int runningtime;
+    int runningtime;  
     int id;
 } processData;
