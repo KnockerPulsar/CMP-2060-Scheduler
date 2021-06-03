@@ -79,7 +79,7 @@ int main(int argc, char *argv[])
     // 2. Read the chosen scheduling algorithm and its parameters, if there are any from the argument list.
     /* ============================================================================================= */
 
-    int schedulingAlg = atoi(argv[2]);
+    char * schedulingAlg = argv[2];
 
     // TODO: PUT A FUNCTION HERE TO READ IN THE REQUIRED PARAMETERS FOR EACH SCHEDULING ALGORITHM.
 
@@ -96,6 +96,7 @@ int main(int argc, char *argv[])
     else
     {
         printf("PROCESS GENERATOR: SCHEDULER MESSAGE QUEUE CREATED SUCCESSFULLY\n");
+        printf("%d\n", procGenSchedMsqQID);
     }
     
 
@@ -105,7 +106,7 @@ int main(int argc, char *argv[])
     // Child 0 should be the clock, child 1 should be the scheduler process
     int childIndex, pID;
     const int NUM_CHILDREN = 2;
-
+    int sched_id;
     for (int i = 0; i < NUM_CHILDREN; i++)
     {
         childIndex = i;
@@ -130,6 +131,10 @@ int main(int argc, char *argv[])
                 break;
             }
         }
+        else if (i == 1)
+        {
+            sched_id = pID;
+        }
     }
 
     /* ============================================================================================= */
@@ -137,7 +142,6 @@ int main(int argc, char *argv[])
     // 4. Use this function after creating the clock process to initialize clock.
     // 5. Create a data structure for processes and provide it with its parameters.
     // 6. Send the information to the scheduler at the appropriate time.
-
     initClk();
 
     // Checks every 0.5 seconds if the clock changed
@@ -152,7 +156,7 @@ int main(int argc, char *argv[])
 
         if (prevTime != x)
         {
-            printf("\n[%d] ", x);
+            //printf("\n[%d] ", x);
             fflush(stdout);
         }
         prevTime = x;
@@ -160,6 +164,9 @@ int main(int argc, char *argv[])
         // If a proccess arrives (arrivalTime == currentTime)
         if (x == pData[currProcess].arrivaltime)
         {
+            kill(sched_id ,SIGUSR1);
+            msgsnd(procGenSchedMsqQID, &pData[currProcess], sizeof( pData[currProcess] ), !IPC_NOWAIT);
+            currProcess++;
             // Send the process data up to the scheduler
         }
 

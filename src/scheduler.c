@@ -1,21 +1,25 @@
 #include "headers.h"
-
-struct PG_S_MB processGenBuffer;
+#include <stdlib.h>
+#include <string.h>
+struct processData processGenBuffer;
 int PG_S_MQid;
 int sigAlgo;
 // If the PG is sending a new process to the scheduler, it signals it before sending
 // Via the message queue
 void new_process_handler(int signum)
 {
-    int PG_S_recVal = msgrcv(PG_S_MQid, &processGenBuffer, sizeof(processGenBuffer.P), processGenBuffer.mtype, !IPC_NOWAIT);
+    int PG_S_recVal = msgrcv(PG_S_MQid, &processGenBuffer, sizeof(processGenBuffer), 0, !IPC_NOWAIT);
     if (PG_S_recVal != -1)
     {
+        //Just for testing, feel free to remove this later
         int pid = fork();
         if (pid == 0) // Child
         {
-            execl("process", "process", (char *)NULL);
+            execl("bin/process", "process", (char *)NULL);
         }
-        // TODO: Add this newly created process to the PCB
+        // TODO: Pause the current process  (probably though a signal)
+        // TODO: create the new PCB for this process (PCB can be found in headers.h) change it as you like
+        
         
         // we may need to clear the receive buffer (not sure)
         // Afterwards, add it to different to whatever DS that's hodling tthe process
@@ -32,20 +36,20 @@ int main(int argc, char *argv[])
     // if the scheduler receives this signal, it means that the PG is sending it a new process
     signal(SIGUSR1, new_process_handler);
     // get the id of the PG_S message queue
-    key_t kid = ftok(PG_S_FN, 'A');
+    key_t kid = ftok(PROCGEN_SCHED_QKEY, 'A');
     PG_S_MQid = msgget(kid, 0666 | IPC_CREAT);
-    processGenBuffer.mtype = getpid() % 10000;
+    printf("MQ_ID = %d\n", PG_S_MQid);
     sigAlgo = atoi(argv[1]);
     // Just testing if the forking works fine
     printf("Scheduler spawned!\n");
-    
+    // TODO: dpending on the value of sigAlgo, make the required Datastructures & use them
+    // switch case or if condition
     // Main scheduler loop
     while (1)
     {
        
     }
-    
-    //TODO: implement the scheduler.
+
     //TODO: upon termination release the clock resources.
 
     destroyClk(true);
