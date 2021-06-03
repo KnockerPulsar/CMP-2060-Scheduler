@@ -70,3 +70,11 @@ typedef struct processData
     int runningtime;
     int id;
 } processData;
+
+// Message buffer for communication between Process Generator & the Scheduler
+struct PG_S_MB
+{
+    long mtype;
+    processData P;
+};
+
