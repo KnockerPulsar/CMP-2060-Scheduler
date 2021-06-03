@@ -1,7 +1,7 @@
 #include "headers.h"
 
 /* Modify this file as needed*/
-int remainingtime;
+int remainingtime = 5;
 
 int main(int agrc, char *argv[])
 {
@@ -9,7 +9,10 @@ int main(int agrc, char *argv[])
 
     //TODO The process needs to get the remaining time from somewhere
     //remainingtime = ??;
-    while (remainingtime > 0)
+    
+    // Maybe from the scheduler? Remaining time should depend on how many time steps this process was 
+    // active.
+    while (1/* remainingtime > 0 */)
     {
         // remainingtime = ??;
     }
