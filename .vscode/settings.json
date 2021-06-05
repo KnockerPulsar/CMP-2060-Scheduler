@@ -1,6 +1,7 @@
 {
     "files.associations": {
         "queue.h": "c",
-        "string.h": "c"
+        "string.h": "c",
+        "headers.h": "c"
     }
 }

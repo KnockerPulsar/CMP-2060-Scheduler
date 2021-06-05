@@ -92,7 +92,7 @@ typedef struct PCB
 
 
 //this enum needed to be sent to the scheduler 
-// so the scheduler will lnow which algo to perform
+// so the scheduler will know which algo to perform
 typedef enum Scheduling_Algorithm_Type
 {
     FCFS,

@@ -1,6 +1,7 @@
 #include "headers.h"
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 /* 
 The process generator should simulate a real operating systems as follows:
@@ -49,6 +50,8 @@ processData *ReadSimData(char *filePath);
     Try to run through the console using ./process_generator
     since Ctrl+C to SIGINT doesn't work well in VSCode's console.
 */
+
+
 int main(int argc, char *argv[])
 {
     // Input checking
