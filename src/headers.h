@@ -73,7 +73,7 @@ typedef struct processData
 } processData;
 
 // Message buffer for communication between Process Generator & the Scheduler
-typedef struct PG_S_MB   // Process Generator Scheduler Message Buffer
+typedef struct PG_S_MB   // Process Generator Scheduler Message Buffer 
 {
     long mtype;
     processData P;
@@ -90,3 +90,14 @@ typedef struct PCB
     int remainingtime;
 }PCB;
 
+
+//this enum needed to be sent to the scheduler 
+// so the scheduler will lnow which algo to perform
+typedef enum Scheduling_Algorithm_Type
+{
+    FCFS,
+    SJF,
+    HPF,
+    SRTN,
+    RR
+}Scheduling_Algorithm_Type;

@@ -2,15 +2,14 @@
 #include "queue.h"
 #include <stdlib.h>
 #include <string.h>
+
 struct processData processGenBuffer;
 int PG_S_MQid;
 int sigAlgo;
 
 // Queue to be used for first_come_first_serve, Round Robin
 // Feel free to use it if you need it in any other algorithm
-QUEUE *queue_of_struct_process_data;   
-
-
+QUEUE *PCB_queue;
 
 // If the PG is sending a new process to the scheduler, it signals it before sending
 // Via the message queue
@@ -32,13 +31,45 @@ int main(int argc, char *argv[])
     // switch case or if condition
     // Main scheduler loop
 
+    //theAlogrithm should equal the wanted Algorithm
+    // we should determine the algo from the args in process generator
+    Scheduling_Algorithm_Type theAlgorithm = FCFS;
+
+    //this switch case will be used to make
+    // necessary initalizatins for each alogrithm
+    void (*AlgoToRun)(void);
+    switch (theAlgorithm)
+    {
+    case FCFS:
+        PCB_queue=createQueue();
+        AlgoToRun=&First_Come_First_Serve_Scheduling;
+
+        break;
+    case SJF:
+
+        break;
+    case HPF:
+
+        break;
+    case SRTN:
+
+        break;
+    case RR:
+
+        break;
+
+    default:
+        break;
+    }
+
     /*
+    TODO :  make then switch case and figure out on what to switch 
     switch case
-        case1: first_come_first_serve
+        case1: first_come_first_serve init queue 
     */
     while (1)
     {
-
+        AlgoToRun();
     }
 
     //TODO: upon termination release the clock resources.
@@ -49,7 +80,6 @@ int main(int argc, char *argv[])
 void new_process_handler(int signum)
 {
     int PG_S_recVal = msgrcv(PG_S_MQid, &processGenBuffer, sizeof(processGenBuffer), 0, !IPC_NOWAIT);
-    //queueu.enquue(processgenbuffer)
     if (PG_S_recVal != -1)
     {
         //Just for testing, feel free to remove this later
@@ -68,31 +98,26 @@ void new_process_handler(int signum)
     signal(SIGUSR1, new_process_handler);
 }
 
-void First_Come_First_Serve_Scheduling()
+void First_Come_First_Serve_Scheduling(void)
 {
-    
 
-    processData *ptr_to_arriving_processes;
+    PCB *ptr_to_arriving_processes;
 
-    while (!emptyQueue(queue_of_struct_process_data))
+    while (!emptyQueue(PCB_queue))
     {
-        processData process_to_perform_now;
-        processData *front_process_queue;
-        queueFront(queue_of_struct_process_data, (void *)&front_process_queue);
-
-        /*code to make the process and wait until it finishes*/
-
-        dequeue(queue_of_struct_process_data, (void *)&front_process_queue);
-        /*
-        if(process came)
+        PCB process_to_perform_now;
+        PCB *front_process_queue;
+        dequeue(PCB_queue, (void *)&front_process_queue);
+        int time_now;
+        int process_needed_time=front_process_queue->runningtime;
+        //need here to put the execlp function but dont remmber the syntax now 
+        for(int i=0;i<process_needed_time;i++)
         {
-            ptr_to_arriving_processes=theStruct of newly added process;
-            if(!enqueue(queue_of_struct_process_data,(void*)ptr_to_arriving_processes))
-            {
-                printf("KAAAAAAK ERROR IN ENQUEUING");
-            }
-        }   
-         */
+            time_now=getClk;
+            while(time_now==getClk()); //stuck until the time step if finished
+
+        }
+       
     }
 }
 
