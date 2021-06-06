@@ -53,6 +53,76 @@ bool enqueue(QUEUE *queue, void *itemPtr)
     return true;
 } // enqueue
 
+/*================= enqueue sorted ================
+This algorithm inserts data into a queue given a comparison function to preserve sorting.
+
+If we want the queue to be a max priority queue:
+The comparison function returns 1 if left > right, 0 if left == right, -1 if left < right
+
+Pre queue has been created
+Post data have been inserted with sorting
+Return true if successful, false if overflow or queue is null
+*/
+
+bool enqueue_sorted(QUEUE *queue, void *itemPtr, int comp_func(void *, void *))
+{
+    //Local Definitions
+    QUEUE_NODE *newPtr;
+
+    // Try to allocate memory, return false if no memory is available
+    if (!(newPtr = (QUEUE_NODE *)malloc(sizeof(QUEUE_NODE))) || !queue)
+        return false;
+
+    newPtr->dataPtr = itemPtr;
+    // newPtr->next = NULL;
+
+    if (queue->count == 0)
+        // Inserting into null queue
+        queue->front = newPtr;
+    else
+    {
+        QUEUE_NODE *prevCheckElement = NULL;
+        QUEUE_NODE *currCheckElement = queue->front;
+        // Loop until you find the first smallest element
+        for (int i = 0; i < queue->count; i++)
+        {
+
+            if (comp_func(newPtr->dataPtr, currCheckElement->dataPtr) == 1)
+            {
+                // For a max priority queue
+
+                // If we have a higher value than the front, take its place
+                if (prevCheckElement == NULL)
+                {
+                    newPtr->next = queue->front;
+                    queue->front = newPtr;
+                }
+                // If no value in the queue is lesser, that means that we're the min
+                // Insert at the end
+                else if (currCheckElement == NULL)
+                {
+                    queue->rear->next = newPtr;
+                    queue->rear = newPtr;
+                }
+                // If the current element is less than the element we want to insert
+                // Then we should insert the new element between the previous element and the current element
+                // So, prev->next = newItem, newItem->next = current
+                else
+                {
+                    prevCheckElement->next = newPtr;
+                    newPtr->next = currCheckElement;
+                }
+                break;
+            }
+            prevCheckElement = currCheckElement;
+            currCheckElement = currCheckElement->next;
+        }
+    }
+
+    (queue->count)++;
+    return true;
+} // enqueue
+
 /*================= dequeue ================
 This algorithm deletes a node from the queue.
 Pre queue has been created
@@ -100,9 +170,6 @@ bool queueFront(QUEUE *queue, void **itemPtr)
         return true;
     } // else
 } // queueFront
-
-
-
 
 /*================== queueRear =================
 Retrieves data at the rear of the queue
