@@ -87,7 +87,8 @@ int main(int argc, char *argv[])
 
         break;
     case RR:
-
+        PCB_Scheduling_Queue = createQueue();
+        AlgoToRun = &Round_Robin_Scheduling;
         break;
 
     default:
@@ -210,7 +211,6 @@ void Round_Robin_Scheduling(void)
 
         //printf("end_time=%d\n",end_time);
 
-
         int time_at_entry = getClk();
         int currTime = getClk();
         kill(front_process_queue->pid, SIGCONT);
@@ -228,7 +228,11 @@ void Round_Robin_Scheduling(void)
         }
         // flag to determine if the process is ended
         bool flag = (front_process_queue->remainingtime == 0) ? 0 : 1;
-        if (!flag) //free the memory if the process is finished
+        if (flag) // if the process has to run again
+        {
+            kill(front_process_queue->pid, SIGSTOP);
+        }
+        else //free the memory if the process is finished
         {
             free(front_process_queue);
         }
@@ -242,14 +246,14 @@ void Round_Robin_Scheduling(void)
                 enqueue(PCB_Scheduling_Queue, (void *)ptr_to_arriving_processes);
             }
 
-            //if there is newly added process in the same time 
+            //if there is newly added process in the same time
             // the previously running process ends
             // then the priorituy goes to the previoulsy running process
-            else if (flag) 
+            else if (flag)
             {
                 enqueue(PCB_Scheduling_Queue, (void *)front_process_queue);
                 enqueue(PCB_Scheduling_Queue, (void *)ptr_to_arriving_processes);
-                flag=0;
+                flag = 0;
             }
             else
             {
