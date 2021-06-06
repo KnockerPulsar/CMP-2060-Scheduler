@@ -41,6 +41,9 @@ void clearResources(int sig_num);
 // To read the process data from disk
 processData *ReadSimData(char *filePath);
 
+// Global variables
+int lines;
+
 /* ============================================================================================= */
 
 // Assuming the process data file and scheduling algorithm number will be passed to this file.
@@ -90,7 +93,7 @@ int main(int argc, char *argv[])
     // Before forking the scheduler, let's create the message queue we will send the process data over
 
     // Added a cast to please the compiler, hope it doesn't cause issues
-    int procGenSchedMsqQID = msgget(ftok(PROCGEN_SCHED_QKEY, 'A'), 0666 | IPC_CREAT); 
+    int procGenSchedMsqQID = msgget(ftok(PROCGEN_SCHED_QKEY, 'A'), 0666 | IPC_CREAT);
     if (procGenSchedMsqQID == -1)
     {
         perror("PROCESS GENERATOR: Error in creating the PG_S MQ\n");
@@ -98,10 +101,24 @@ int main(int argc, char *argv[])
     }
     else
     {
-        printf("PROCESS GENERATOR: SCHEDULER MESSAGE QUEUE CREATED SUCCESSFULLY\n");
-        printf("%d\n", procGenSchedMsqQID);
+        printf("PROCESS GENERATOR: SCHEDULER MESSAGE QUEUE CREATED SUCCESSFULLY WITH ID %d\n", procGenSchedMsqQID);
     }
-    
+    PG_S_MB PG_S_buffer;
+
+    // Create another Message queue for communication between the scheduler & the process
+    // This will be mainly used to send the remaining time to each process so that the process
+    // Will terminate itself at remaining time = 0
+
+    int SchedProcMsgQID = msgget(ftok(SCHED_PROC_QKEY, 'B'), 0666 | IPC_CREAT);
+    if (SchedProcMsgQID == -1)
+    {
+        perror("PROCESS GENERATOR: Error in creating the S_P MQ\n");
+        exit(-1);
+    }
+    else
+    {
+        printf("PROCESS GENERATOR: PROCESS MESSAGE QUEUE CREATED SUCCESSFULLY WITH ID %d\n", SchedProcMsgQID);
+    }
 
     // 3. Initiate and create the scheduler and clock processes.
     /* ============================================================================================= */
@@ -127,7 +144,7 @@ int main(int argc, char *argv[])
             case SchedChild:
             {
                 printf("Scheduler child!\n");
-                execl("bin/scheduler", "scheduler", schedulingAlg ,(char *)NULL);
+                execl("bin/scheduler", "scheduler", schedulingAlg, (char *) NULL);
                 break;
             }
             default:
@@ -137,6 +154,7 @@ int main(int argc, char *argv[])
         else if (i == 1)
         {
             sched_id = pID;
+            PG_S_buffer.mtype = sched_id % 10000;
         }
     }
 
@@ -168,7 +186,8 @@ int main(int argc, char *argv[])
         if (x == pData[currProcess].arrivaltime)
         {
             kill(sched_id ,SIGUSR1);
-            msgsnd(procGenSchedMsqQID, &pData[currProcess], sizeof( pData[currProcess] ), !IPC_NOWAIT);
+            PG_S_buffer.P = pData[currProcess];
+            msgsnd(procGenSchedMsqQID, &PG_S_buffer, sizeof( PG_S_buffer.P ), !IPC_NOWAIT);
             currProcess++;
             // Send the process data up to the scheduler
         }
@@ -201,7 +220,8 @@ processData *ReadSimData(char *filePath)
     }
 
     const int buffSize = 32;   // For readiblility
-    int lines = 0, readChars;  // To store the number of lines and how many chars were read
+    lines = 0;
+    int readChars;  // To store the number of lines and how many chars were read
     size_t lineLen = buffSize; // To tell getline() the size of our buffer.
 
     // Allocating the buffer and creating a pointer to the start since getline() doesn't like passing

@@ -101,3 +101,11 @@ typedef enum Scheduling_Algorithm_Type
     SRTN,
     RR
 }Scheduling_Algorithm_Type;
+
+// Struct for communication between the scheduler & the process
+// Currently being used to send the remaining time
+typedef struct S_P_MB
+{
+    int remaining_time;
+    long mtype;
+}S_P_MB;
