@@ -109,16 +109,19 @@ int main(int argc, char *argv[])
     // This will be mainly used to send the remaining time to each process so that the process
     // Will terminate itself at remaining time = 0
 
-    int SchedProcMsgQID = msgget(ftok(SCHED_PROC_QKEY, 'B'), 0666 | IPC_CREAT);
-    if (SchedProcMsgQID == -1)
+    int SchedProcShMemID = shmget(ftok(SCHED_PROC_QKEY, 'B'), sizeof(int), 0666 | IPC_CREAT);
+
+    if (SchedProcShMemID == -1)
     {
-        perror("PROCESS GENERATOR: Error in creating the S_P MQ\n");
+        perror("PROCESS GENERATOR: Error in creating the S_P SM\n");
         exit(-1);
     }
     else
     {
-        printf("PROCESS GENERATOR: PROCESS MESSAGE QUEUE CREATED SUCCESSFULLY WITH ID %d\n", SchedProcMsgQID);
-    }
+        printf("PROCESS GENERATOR: PROCESS SHARED MEMEORY CREATED SUCCESSFULLY WITH ID %d\n", SchedProcShMemID);
+    } 
+
+   
 
     // 3. Initiate and create the scheduler and clock processes.
     /* ============================================================================================= */

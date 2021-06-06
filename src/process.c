@@ -10,24 +10,24 @@ int main(int agrc, char *argv[])
     initClk();
 
     fflush(stdin);
-    printf("Process with PID %d initialized", getpid());
+    printf("Process with PID %d initialized at time %d\n", getpid(), getClk());
 
-    int S_P_MQid = msgget(ftok(SCHED_PROC_QKEY, 'B'), 0666 |IPC_CREAT);
+    int S_P_ShMemid = shmget(ftok(SCHED_PROC_QKEY, 'B'), sizeof(int) ,0666 |IPC_CREAT);
 
-    S_P_MB recvBuff;
-    recvBuff.remaining_time  = 1; // initial value
-    recvBuff.mtype = getpid() % 10000;
+    // Attach the shared memory to the scheduler
+    int* memAdr = (int *) shmat(S_P_ShMemid, (void *) 0, 0);
 
-    while (recvBuff.remaining_time > 0)
+
+    while (*memAdr > 0)
     {
-        msgrcv(S_P_MQid, &recvBuff, sizeof(recvBuff.remaining_time), recvBuff.mtype, IPC_NOWAIT);
-    }
+        // Busy waiting
+    }   
+
+    fflush(stdin);
+    printf("Terminating process with PID %d at time %d\n", getpid(), getClk());
 
     destroyClk(false);
 
-
-    fflush(stdin);
-    printf("Terminating process with PID %d at time %d\n", getpid());
     // Terminate this process
     raise(SIGKILL);
 

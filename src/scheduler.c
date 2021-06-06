@@ -12,8 +12,8 @@ struct PG_S_MB processGenBuffer;
 int PG_S_MQid;
 
 // Variables for communication between the scheduler & each process
-int S_P_MQid;
-struct S_P_MB processSchedBuffer;
+int S_P_ShMemid;
+int * memAdr;
 
 // Queue to be used for first_come_first_serve, Round Robin
 // Feel free to use it if you need it in any other algorithm
@@ -51,8 +51,14 @@ int main(int argc, char *argv[])
 
     // Getting the ID of the S_P MQ
     key_t kid2 = ftok(SCHED_PROC_QKEY, 'B');
-    S_P_MQid = msgget(kid2, 0666 |IPC_CREAT);
-    printf("S_P_MQid = %d\n", S_P_MQid);
+    S_P_ShMemid = shmget(kid2, sizeof(int) ,0666 |IPC_CREAT);
+
+    // Attach the shared memory to the scheduler
+    memAdr = (int *) shmat(S_P_ShMemid, (void *) 0, 0);
+
+    printf("S_P_MQid = %d\n", S_P_ShMemid);
+
+
 
 
     // TODO: dpending on the value of sigAlgo, make the required Datastructures & use them
@@ -159,7 +165,7 @@ void First_Come_First_Serve_Scheduling(void)
         PCB *front_process_queue;
         dequeue(PCB_queue, (void *)&front_process_queue);
 
-        printf("process with id %d is now running\n", front_process_queue->pid);
+        //printf("process with id %d is now running\n", front_process_queue->pid);
 
         int end_time = getClk() + front_process_queue->remainingtime;
 
@@ -169,15 +175,14 @@ void First_Come_First_Serve_Scheduling(void)
 
         int currTime = getClk();
 
-        processSchedBuffer.mtype = front_process_queue->pid % 10000;
+       *memAdr = front_process_queue->remainingtime;
 
         while (front_process_queue->remainingtime > 0)
         {
             if (getClk() != currTime)
             {
                 front_process_queue->remainingtime -= 1;
-                processSchedBuffer.remaining_time = front_process_queue->remainingtime;
-                msgsnd(S_P_MQid, &processSchedBuffer, sizeof(processSchedBuffer), !IPC_NOWAIT);
+                *memAdr = front_process_queue->remainingtime;
                 currTime = getClk();
             }
             //printf("current_time=%d",getClk());
