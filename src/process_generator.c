@@ -3,6 +3,8 @@
 #include <string.h>
 #include <stdio.h>
 
+// TODO : Clear all IPC recources at the end
+
 /* 
 The process generator should simulate a real operating systems as follows:
     •[DONE]It reads the input files containing the information about processes (check the
@@ -146,8 +148,18 @@ int main(int argc, char *argv[])
             }
             case SchedChild:
             {
+                int c = 0;
+                int temp = lines;
+                while (temp > 0)
+                {
+                    temp /= 10;
+                    c++;
+                }
+                char * str = malloc(sizeof(char) * c);
+                sprintf(str, "%d", lines);
                 printf("Scheduler child!\n");
-                execl("bin/scheduler", "scheduler", schedulingAlg, (char *) NULL);
+                execl("bin/scheduler", "scheduler", schedulingAlg, str, (char *) NULL);
+                free(str);
                 break;
             }
             default:

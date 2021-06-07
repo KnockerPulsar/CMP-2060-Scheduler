@@ -29,6 +29,15 @@ void new_process_handler(int signum);
 // Scheduling Algorithms
 void First_Come_First_Serve_Scheduling();
 
+// Reporting stuff
+bool runningProcess;
+float CPU_util;
+int runningTime;
+int idleTime;
+int prevRunningTime;
+int numOfProcs;
+int waiting_time;
+int waiting_turnaround_time;
 
 int main(int argc, char *argv[])
 {
@@ -58,8 +67,18 @@ int main(int argc, char *argv[])
 
     printf("S_P_MQid = %d\n", S_P_ShMemid);
 
+    // CPU_Utilization stuff & outputs
+    CPU_util = 0;
+    runningProcess = false;
+    idleTime = 0;
+    runningTime = 0;
+    prevRunningTime = 0;
+    numOfProcs = atoi(argv[2]);
+    waiting_time = 0;
+    waiting_turnaround_time = 0;
+    int num = numOfProcs;
 
-
+    printf("The number of Processes to schedule is %d\n", numOfProcs);
 
     // TODO: dpending on the value of sigAlgo, make the required Datastructures & use them
 
@@ -94,14 +113,39 @@ int main(int argc, char *argv[])
     default:
         break;
     }
+    
+    int currTime = getClk();
 
-
-    while (1)
+    while (numOfProcs > 0)
     {
         AlgoToRun();
+        
+        // Check if the CPU was idle for the last cycle
+
+        if (prevRunningTime == runningTime && currTime != getClk())
+        {
+            idleTime += 1;
+        }
+
+        if (currTime !=  getClk())
+        {
+        // Calculate & Report the CPU Utilization
+        if (idleTime == 0)
+            CPU_util = 100;
+        else
+            CPU_util = (runningTime / ( (float) idleTime + runningTime ) ) * 100;
+
+        currTime = getClk();
+        }
+        
+
     }
-
-
+    
+    fflush(stdin);
+    printf("Scheduler is done computing\n");
+    printf("CPU Utilization: %f\n", CPU_util);
+    printf("Average Waiting time: %f\n", (float) waiting_time / num );
+    printf("Average Turnaround Waiting time: %f\n", (float) waiting_turnaround_time / num);
     destroyClk(true);
 }
 
@@ -161,7 +205,7 @@ void First_Come_First_Serve_Scheduling(void)
     
     if (!emptyQueue(PCB_queue))
     {
-
+        runningProcess = true;
         PCB *front_process_queue;
         dequeue(PCB_queue, (void *)&front_process_queue);
 
@@ -175,7 +219,9 @@ void First_Come_First_Serve_Scheduling(void)
 
         int currTime = getClk();
 
-       *memAdr = front_process_queue->remainingtime;
+        *memAdr = front_process_queue->remainingtime;
+
+        prevRunningTime = runningTime;
 
         while (front_process_queue->remainingtime > 0)
         {
@@ -184,11 +230,13 @@ void First_Come_First_Serve_Scheduling(void)
                 front_process_queue->remainingtime -= 1;
                 *memAdr = front_process_queue->remainingtime;
                 currTime = getClk();
+                runningTime += 1;
             }
             //printf("current_time=%d",getClk());
             // blocking
         }
 
+        
         //fflush(stdin);
 
         //printf("Process with id %d finished at time %d\n", front_process_queue->pid, getClk());
@@ -196,7 +244,11 @@ void First_Come_First_Serve_Scheduling(void)
         //kill(front_process_queue->pid, SIGSTOP);
 
         // Delete the allocated data for this PCB
-        free(front_process_queue);        
+        waiting_turnaround_time += getClk() - front_process_queue->arrivaltime;
+        waiting_time += getClk() - front_process_queue->arrivaltime - front_process_queue->runningtime;
+        //printf("This process waiting for %d cycles\n", getClk() - front_process_queue->arrivaltime - front_process_queue->runningtime);
+        free(front_process_queue);
+        numOfProcs--;    
     }
 }
 
