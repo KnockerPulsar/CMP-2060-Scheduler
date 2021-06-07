@@ -20,6 +20,7 @@ QUEUE *createQueue(void);
 QUEUE *destroyQueue(QUEUE *queue);
 bool dequeue(QUEUE *queue, void **itemPtr);
 bool enqueue(QUEUE *queue, void *itemPtr);
+bool enqueue_sorted(QUEUE *queue, void *itemPtr, int comp_func(void*, void*));
 bool queueFront(QUEUE *queue, void **itemPtr);
 bool queueRear(QUEUE *queue, void **itemPtr);
 int queueCount(QUEUE *queue);
