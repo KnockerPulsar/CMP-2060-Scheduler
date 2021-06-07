@@ -29,9 +29,12 @@ QUEUE *PCBs;
 void new_process_handler(int signum);
 
 // Scheduling Algorithms
-void First_Come_First_Serve_Scheduling();
-
+void First_Come_First_Serve_Scheduling(void);
 void Round_Robin_Scheduling(void);
+void PreemtiveHighestPriorityFirst(void);
+
+// Comparison functions
+int ComparePriority(void *, void *);
 
 int main(int argc, char *argv[])
 {
@@ -81,7 +84,8 @@ int main(int argc, char *argv[])
 
         break;
     case HPF:
-
+        PCB_Scheduling_Queue = createQueue();
+        AlgoToRun = &PreemtiveHighestPriorityFirst;
         break;
     case SRTN:
 
@@ -269,4 +273,99 @@ void Round_Robin_Scheduling(void)
         dequeue(PCBs, (void *)&ptr_to_arriving_processes);
         enqueue(PCB_Scheduling_Queue, (void *)ptr_to_arriving_processes);
     }
+}
+
+void PreemtiveHighestPriorityFirst()
+{
+    static PCB *newProc, *currentRunning, *dequeuePtr;
+    static int currTime = 0;
+
+    // Check for an incoming process
+    // If the process queue has a process, consume it
+    if (!emptyQueue(PCBs))
+    {
+        printf("PHPF: New process arrived\n");
+        dequeue(PCBs, (void *)(&newProc));
+        currTime = getClk();
+
+        // If first process
+        if (emptyQueue(PCB_Scheduling_Queue))
+        {
+            printf("PHPF: New process is the only one\n");
+            enqueue(PCB_Scheduling_Queue, (void *)newProc);
+            currentRunning = newProc;
+            *memAdr = currentRunning->remainingtime;
+            kill(currentRunning->pid, SIGCONT);
+        }
+        else
+        {
+            printf("PHPF: New process among other processes\n");
+            // If there's one, check if its priority is higher than the current priority
+            if (newProc->priority > currentRunning->priority)
+            // If so, send SIGSTOP to the current process, place the new one in the queue, and send SIGSTRT to it if needed
+            {
+                printf("PHPF: New process has higher priority than current one, switching...\n");
+                kill(currentRunning->pid, SIGSTOP);
+                currentRunning = newProc;
+                *memAdr = currentRunning->remainingtime;
+                kill(currentRunning->pid, SIGCONT);
+            }
+            // If its priority is less, just enqueue
+            enqueue_sorted(PCB_Scheduling_Queue, (void *)newProc, ComparePriority);
+        }
+    }
+
+    if (emptyQueue(PCB_Scheduling_Queue))
+        return;
+
+    // TODO Update the running process's remaining time through the shared memory segment
+
+    if (currTime != getClk())
+    {
+        currTime = getClk();
+
+        // If there are no incoming processes, just run the current process
+        currentRunning->remainingtime--;
+
+        // If the process's time is out, remove it from the queue
+        if (currentRunning->remainingtime == 0)
+        {
+            printf("Process %d removed from queue at time step %d\n", currentRunning->pid, currTime);
+            dequeue(PCB_Scheduling_Queue, (void *)(&dequeuePtr));
+            free(dequeuePtr);
+            dequeuePtr = NULL;
+            printf("%d", queueCount(PCB_Scheduling_Queue));
+
+            if (queueCount(PCB_Scheduling_Queue) > 0)
+            {
+                // printf("Hello, new process\n");
+                queueFront(PCB_Scheduling_Queue, (void *)(&dequeuePtr));
+                printf("%d", queueCount(PCB_Scheduling_Queue));
+
+                // if (dequeuePtr)
+                //     printf("%d \n", dequeuePtr->remainingtime);
+                // else
+                //     printf("KAAAAAAAAAAAAAAAAAK");
+                // // queueFront(PCB_Scheduling_Queue,(void*)(&dequeuePtr));
+                // printf("%d ",dequeuePtr->remainingtime);
+                // currentRunning = dequeuePtr;
+                // *memAdr = currentRunning->remainingtime;
+                // kill(currentRunning->pid,SIGCONT);
+            }
+        }
+        printf("%d\n", *memAdr);
+    }
+
+    *memAdr = currentRunning->remainingtime;
+}
+
+int ComparePriority(void *left, void *right)
+{
+    PCB *leftObj = (PCB *)left, *rightObj = (PCB *)right;
+    if (leftObj->priority > rightObj->priority)
+        return 1;
+    else if (leftObj->priority < rightObj->priority)
+        return -1;
+    else
+        return 0;
 }

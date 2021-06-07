@@ -54,7 +54,6 @@ int lines;
     since Ctrl+C to SIGINT doesn't work well in VSCode's console.
 */
 
-
 int main(int argc, char *argv[])
 {
     // Input checking
@@ -85,10 +84,9 @@ int main(int argc, char *argv[])
     // 2. Read the chosen scheduling algorithm and its parameters, if there are any from the argument list.
     /* ============================================================================================= */
 
-    char * schedulingAlg = argv[2];
+    char *schedulingAlg = argv[2];
 
     // TODO: PUT A FUNCTION HERE TO READ IN THE REQUIRED PARAMETERS FOR EACH SCHEDULING ALGORITHM.
-
 
     // Before forking the scheduler, let's create the message queue we will send the process data over
 
@@ -119,9 +117,7 @@ int main(int argc, char *argv[])
     else
     {
         printf("PROCESS GENERATOR: PROCESS SHARED MEMEORY CREATED SUCCESSFULLY WITH ID %d\n", SchedProcShMemID);
-    } 
-
-   
+    }
 
     // 3. Initiate and create the scheduler and clock processes.
     /* ============================================================================================= */
@@ -147,7 +143,7 @@ int main(int argc, char *argv[])
             case SchedChild:
             {
                 printf("Scheduler child!\n");
-                execl("bin/scheduler", "scheduler", schedulingAlg, (char *) NULL);
+                execl("bin/scheduler", "scheduler", schedulingAlg, (char *)NULL);
                 break;
             }
             default:
@@ -175,27 +171,20 @@ int main(int argc, char *argv[])
     // Another solution is to use a busy wait loop
     while (1)
     {
-        static int prevTime = 0, currProcess = 0;
-        int x = getClk(); // To get time use this function.
-
-        if (prevTime != x)
+        static int currTime = -1, currProcess = 0;
+        if (getClk() != currTime)
         {
-            //printf("\n[%d] ", x);
-            fflush(stdout);
+            currTime = getClk();
+            // If a proccess arrives (arrivalTime == currentTime)
+            if (currTime == pData[currProcess].arrivaltime)
+            {
+                kill(sched_id, SIGUSR1);
+                PG_S_buffer.P = pData[currProcess];
+                msgsnd(procGenSchedMsqQID, &PG_S_buffer, sizeof(PG_S_buffer.P), !IPC_NOWAIT);
+                currProcess++;
+                // Send the process data up to the scheduler
+            }
         }
-        prevTime = x;
-
-        // If a proccess arrives (arrivalTime == currentTime)
-        if (x == pData[currProcess].arrivaltime)
-        {
-            kill(sched_id ,SIGUSR1);
-            PG_S_buffer.P = pData[currProcess];
-            msgsnd(procGenSchedMsqQID, &PG_S_buffer, sizeof( PG_S_buffer.P ), !IPC_NOWAIT);
-            currProcess++;
-            // Send the process data up to the scheduler
-        }
-
-        usleep(0.1 * 10e5); // Sleep for 0.1 seconds
     }
 
     // 7. Clear clock resources
@@ -222,9 +211,9 @@ processData *ReadSimData(char *filePath)
         exit(-1);
     }
 
-    const int buffSize = 32;   // For readiblility
+    const int buffSize = 32; // For readiblility
     lines = 0;
-    int readChars;  // To store the number of lines and how many chars were read
+    int readChars;             // To store the number of lines and how many chars were read
     size_t lineLen = buffSize; // To tell getline() the size of our buffer.
 
     // Allocating the buffer and creating a pointer to the start since getline() doesn't like passing
