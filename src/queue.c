@@ -79,6 +79,21 @@ bool enqueue_sorted(QUEUE *queue, void *itemPtr, int comp_func(void *, void *))
     if (queue->count == 0)
         // Inserting into null queue
         queue->front = newPtr;
+    // Just one element
+    else if (queue->count == 1)
+    {
+        if (comp_func(queue->front->dataPtr, newPtr->dataPtr) == -1)
+        {
+            newPtr->next = queue->front;
+            queue->front = newPtr;
+        }
+        else
+        {
+            queue->front->next = newPtr;
+        }
+        queue->count++;
+        return true;
+    }
     else
     {
         QUEUE_NODE *prevCheckElement = NULL;

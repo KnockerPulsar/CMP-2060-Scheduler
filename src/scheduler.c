@@ -351,14 +351,20 @@ void PreemtiveHighestPriorityFirst()
     // If the process queue has a process, consume it
     if (!emptyQueue(PCBs))
     {
-        printf("PHPF: New process arrived\n");
         dequeue(PCBs, (void *)(&newProc));
+        printf("Process with ID: %d, remaining time: %d, priority: %d arrived. ", newProc->id, newProc->remainingtime, newProc->priority);
         currTime = getClk();
+
+        if (currTime != getClk())
+        {
+            printf("[%d] ", currTime);
+            fflush(stdout);
+        }
 
         // If first process
         if (emptyQueue(PCB_Scheduling_Queue))
         {
-            printf("PHPF: New process is the only one\n");
+            printf("%s", "The process is alone, inserting at the front of the queue. ");
             enqueue(PCB_Scheduling_Queue, (void *)newProc);
             currentRunning = newProc;
             *memAdr = currentRunning->remainingtime;
@@ -366,12 +372,12 @@ void PreemtiveHighestPriorityFirst()
         }
         else
         {
-            printf("PHPF: New process among other processes\n");
+            printf("%s", "There are other processes, inserting somewhere in the queue. ");
             // If there's one, check if its priority is higher than the current priority
-            if (newProc->priority > currentRunning->priority)
+            if (ComparePriority(newProc, currentRunning) == 1)
             // If so, send SIGSTOP to the current process, place the new one in the queue, and send SIGSTRT to it if needed
             {
-                printf("PHPF: New process has higher priority than current one, switching...\n");
+                printf("%s", "Process has higher priority than the current running process, replacing. ");
                 kill(currentRunning->pid, SIGSTOP);
                 currentRunning = newProc;
                 *memAdr = currentRunning->remainingtime;
@@ -397,33 +403,30 @@ void PreemtiveHighestPriorityFirst()
         // If the process's time is out, remove it from the queue
         if (currentRunning->remainingtime == 0)
         {
-            printf("Process %d removed from queue at time step %d\n", currentRunning->pid, currTime);
+            printf("%s", "A process has finished running, removing from the queue. ");
             dequeue(PCB_Scheduling_Queue, (void *)(&dequeuePtr));
-            free(dequeuePtr);
-            dequeuePtr = NULL;
-            printf("%d", queueCount(PCB_Scheduling_Queue));
 
-            if (queueCount(PCB_Scheduling_Queue) > 0)
+            if (queueFront(PCB_Scheduling_Queue, (void *)(&dequeuePtr)))
             {
-                // printf("Hello, new process\n");
-                queueFront(PCB_Scheduling_Queue, (void *)(&dequeuePtr));
-                printf("%d", queueCount(PCB_Scheduling_Queue));
-
-                // if (dequeuePtr)
-                //     printf("%d \n", dequeuePtr->remainingtime);
-                // else
-                //     printf("KAAAAAAAAAAAAAAAAAK");
-                // // queueFront(PCB_Scheduling_Queue,(void*)(&dequeuePtr));
-                // printf("%d ",dequeuePtr->remainingtime);
-                // currentRunning = dequeuePtr;
-                // *memAdr = currentRunning->remainingtime;
-                // kill(currentRunning->pid,SIGCONT);
+                printf("%s", "There are other processes left, dequeuing one. ");
+                currentRunning = dequeuePtr;
+                *memAdr = currentRunning->remainingtime;
+                kill(currentRunning->pid, SIGCONT);
             }
         }
         printf("%d\n", *memAdr);
-    }
+        *memAdr = currentRunning->remainingtime;
 
-    *memAdr = currentRunning->remainingtime;
+        // View queue
+        QUEUE_NODE *ptr = PCB_Scheduling_Queue->front;
+        while (ptr)
+        {
+            printf("%d \t", ((PCB *)ptr->dataPtr)->pid);
+            ptr = ptr->next;
+        }
+        printf("%s", "\n");
+        ////////////////////////////////////////////////////
+    }
 }
 
 int ComparePriority(void *left, void *right)

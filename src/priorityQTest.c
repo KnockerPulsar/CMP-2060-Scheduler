@@ -34,4 +34,12 @@ int main()
 		enqueue_sorted(q, &numbers[i], compare_ints);
 		PrintQ(q);
 	}
+	int * dQ;
+	for (int i = 0; i < num; i++)
+	{
+		dequeue(q,(void*)&dQ);
+		printf("Dequeued %d \n", *dQ);
+	}
+	printf("Finish dequeuing \n");
+	
 }
