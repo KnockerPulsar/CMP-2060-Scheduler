@@ -13,4 +13,4 @@ clean:
 all: clean build
 
 run:
-	./bin/process_generator src/processes.txt 1
+	./bin/process_generator src/processes.txt 3
