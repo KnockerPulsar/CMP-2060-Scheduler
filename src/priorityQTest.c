@@ -27,19 +27,25 @@ void PrintQ(QUEUE *q)
 int main()
 {
 	int num = 69;
+	//int num = 7;
 	int numbers[] = {4, 5, 7, 11, 12, 17, 18, 19, 20, 21, 23, 24, 25, 26, 28, 30, 32, 33, 36, 37, 38, 42, 45, 48, 49, 50, 54, 56, 58, 59, 60, 61, 62, 63, 64, 65, 70, 71, 72, 73, 75, 78, 79, 81, 82, 83, 84, 87, 88, 89, 90, 91, 92, 93, 96, 97, 98, 99, 100, 102, 104, 105, 109, 110, 113, 114, 115, 118, 120};
+	//int numbers[] = {4, 5, 2, 3, 1 , 8, 6};
 	QUEUE *q = createQueue();
+	printf("The input array :");
+	for(int j=0; j<num; j++)
+		printf(" %d",numbers[j]);
+	printf("\n");
 	for (size_t i = 0; i < num; i++)
 	{
 		enqueue_sorted(q, &numbers[i], compare_ints);
 		PrintQ(q);
 	}
-	int * dQ;
-	for (int i = 0; i < num; i++)
-	{
-		dequeue(q,(void*)&dQ);
-		printf("Dequeued %d \n", *dQ);
-	}
-	printf("Finish dequeuing \n");
+	//int * dQ;
+	//for (int i = 0; i < num; i++)
+	//{
+	//	dequeue(q,(void*)&dQ);
+	//	printf("Dequeued %d \n", *dQ);
+	//}
+	//printf("Finish dequeuing \n");
 	
 }
