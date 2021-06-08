@@ -60,21 +60,6 @@ int CompareRunningTime(void *, void *);
 int ComparePriority(void *, void *);
 int CompareRemainingTime(void *, void *);
 
-//Del later
-void printPCB_Scheduling_Queue(QUEUE *q)
-{
-    QUEUE_NODE *ptr = q->front;
-    PCB *p = (PCB *)ptr->dataPtr;
-    while (ptr)
-    {
-        printf("%d --> ", p->id);
-        fflush(stdout);
-        ptr = ptr->next;
-        p = (PCB *)ptr->dataPtr;
-    }
-    printf("\n");
-}
-
 int main(int argc, char *argv[])
 {
     printf("Scheduler spawned!\n");
@@ -226,6 +211,13 @@ int main(int argc, char *argv[])
 void output_started(PCB *process)
 {
     fprintf(logFile, "At time %d process %d started arr %d total %d remain %d wait %d\n", getClk(), process->id,
+            process->arrivaltime, process->runningtime, process->remainingtime,
+            getClk() - process->arrivaltime - (process->runningtime - process->remainingtime));
+}
+
+void output_resumed(PCB *process)
+{
+    fprintf(logFile, "At time %d process %d resumed arr %d total %d remain %d wait %d\n", getClk(), process->id,
             process->arrivaltime, process->runningtime, process->remainingtime,
             getClk() - process->arrivaltime - (process->runningtime - process->remainingtime));
 }
@@ -455,11 +447,14 @@ void Shortest_Remaining_Time_Next_Scheduling(void)
         // }
         // printf("%s", "\n");
         PCB *front_process_queue;
-        dequeue(PCB_Scheduling_Queue, (void *)&front_process_queue);
+        dequeue(PCB_Scheduling_Queue, (void *)&front_process_queue);        
 
         kill(front_process_queue->pid, SIGCONT);
-
-        output_started(front_process_queue);
+        
+        if(front_process_queue->remainingtime < front_process_queue->runningtime)
+            output_resumed(front_process_queue);
+        else
+            output_started(front_process_queue);
 
         int currTime = getClk();
 
@@ -479,6 +474,7 @@ void Shortest_Remaining_Time_Next_Scheduling(void)
                 {
                     Preemption = true;
                     enqueue_sorted(PCB_Scheduling_Queue, (void *)front_process_queue, CompareRemainingTime);
+                    output_stopped(front_process_queue);
                     //printf("Process with id %d preempted that of id %d at time %d\n", ptr_to_arriving_processes->id, front_process_queue->id, getClk());
                     break;
                 }
