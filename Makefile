@@ -5,7 +5,7 @@ build:
 	gcc -c src/queue.c
 	gcc -o bin/scheduler scheduler.o queue.o
 	gcc src/process.c -o process
-	gcc test_generator.c -o test_generator.out
+	gcc src/test_generator.c -o test_generator.out
 
 clean:
 	rm -f *.out  processes.txt
@@ -13,4 +13,4 @@ clean:
 all: clean build
 
 run:
-	./bin/process_generator src/processes.txt 0
+	./bin/process_generator src/processes.txt 1

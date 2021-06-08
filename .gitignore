@@ -1,2 +1,11 @@
 
 .vscode/settings.json
+process
+queue.o
+scheduler.o
+bin/process_generator
+bin/scheduler
+src/p.o
+test_generator.out
+queue.o
+scheduler.o

@@ -24,14 +24,21 @@ QUEUE *PCB_Scheduling_Queue;
 // This queue is used to transfer process data from the new process handler to the current Algorithm function
 QUEUE *PCBs;
 
+//Used to store the Algorithm number. If this number is equal to 2 then elements are enqueued sorted by Running time in PCBs
+// If this number is equal to 4 then elements are enqueued sorted by Remaining time in PCBs
+// Any other algorithm is sorted normally
+Scheduling_Algorithm_Type theAlgorithm;
+
 // If the PG is sending a new process to the scheduler, it signals it before sending
 // Then it sends the process data via a Message queue
 void new_process_handler(int signum);
 
 // Scheduling Algorithms
 void First_Come_First_Serve_Scheduling(void);
+void Shortest_Job_First_Scheduling(void);
+void PreemptiveHighestPriorityFirst(void);
+void Shortest_Remaining_Time_Next_Scheduling(void);
 void Round_Robin_Scheduling(void);
-void PreemtiveHighestPriorityFirst(void);
 
 // Variables used for output files
 bool runningProcess;
@@ -42,11 +49,30 @@ int prevRunningTime;
 int numOfProcs;
 int waiting_time;
 int waiting_turnaround_time;
+char* InputFileName;
 QUEUE* LOG;
 QUEUE* PERF;
 
 // Comparison functions
+int CompareRunningTime(void *, void *);
 int ComparePriority(void *, void *);
+int CompareRemainingTime(void *, void *);
+
+
+//Del later
+void printPCB_Scheduling_Queue(QUEUE *q)
+{
+    QUEUE_NODE *ptr = q->front;
+    PCB *p = (PCB*)ptr->dataPtr;
+	while (ptr)
+	{
+		printf("%d --> ", p->id);
+		fflush(stdout);
+		ptr = ptr->next;
+        p = (PCB*)ptr->dataPtr;
+	}
+	printf("\n");
+}
 
 int main(int argc, char *argv[])
 {
@@ -83,20 +109,49 @@ int main(int argc, char *argv[])
     idleTime = 0;
     runningTime = 0;
     prevRunningTime = 0;
-    numOfProcs = atoi(argv[2]);
+
+    //InputFileName = argv[1];      //Uncomment after changing the project structure 
+
+    numOfProcs = atoi(argv[2]);     //Comment after changing the project structure
+    //Uncomment after changing the project structure --> Used to count the number of processes
+    // FILE *ptrToFile;
+    // numOfProcs = 0;
+    // char cr;
+    // ptrToFile = fopen(InputFileName, "r");
+    // if (ptrToFile == NULL)
+    // {
+    //     printf("Could not open file %s", InputFileName);
+    //     return 0;
+    // }
+    // cr = getc(ptrToFile);
+    // while (cr != EOF)
+    // {
+    //     if (cr == '\n')
+    //     {
+    //         numOfProcs = numOfProcs + 1;
+    //     }
+    //     cr = getc(ptrToFile);
+    // }
+    //fclose(ptrToFile);
+    //printf("There are %d processes in the input file\n", numOfProcs);
+
     waiting_time = 0;
     waiting_turnaround_time = 0;
 
     printf("The number of Processes to schedule is %d\n", numOfProcs);
 
-    // TODO: dpending on the value of sigAlgo, make the required Datastructures & use them
-
-    // theAlogrithm should be equal to the wanted Algorithm (from 0 to 4)
+    // TODO: depending on the value of sigAlgo, make the required Datastructures & use them
+    // the Algorithm should be equal to the wanted Algorithm (from 1 to 5 as in the document)
+    //1. First Come First Serve (FCFS)
+    //2. Shortest Job First (SJF)
+    //3. Preemptive Highest Priority First (HPF)
+    //4. Shortest Remaining Time Next (SRTN)
+    //5. Round Robin (RR)
     // we should determine the algo from the args in process generator
-    Scheduling_Algorithm_Type theAlgorithm = atoi(argv[1]);
+    theAlgorithm = atoi(argv[1]);
 
     // This switch case will be used to make
-    // The necessary initializations for each alogrithm
+    // The necessary initializations for each algorithm
 
     void (*AlgoToRun)(void);
     switch (theAlgorithm)
@@ -104,23 +159,23 @@ int main(int argc, char *argv[])
     case FCFS:
         PCB_Scheduling_Queue = createQueue();
         AlgoToRun = &First_Come_First_Serve_Scheduling;
-
         break;
     case SJF:
-
+        PCB_Scheduling_Queue = createQueue();
+        AlgoToRun = &Shortest_Job_First_Scheduling;
         break;
     case HPF:
         PCB_Scheduling_Queue = createQueue();
-        AlgoToRun = &PreemtiveHighestPriorityFirst;
+        AlgoToRun = &PreemptiveHighestPriorityFirst;
         break;
     case SRTN:
-
+        PCB_Scheduling_Queue = createQueue();
+        AlgoToRun = &Shortest_Remaining_Time_Next_Scheduling;
         break;
     case RR:
         PCB_Scheduling_Queue = createQueue();
         AlgoToRun = &Round_Robin_Scheduling;
         break;
-
     default:
         break;
     }
@@ -200,7 +255,12 @@ void new_process_handler(int signum)
         // Add this process to the new processes queue
         // The selected Algo can then take this new process and add it
         // To its ready queue (could different for every Algorithm)
-        enqueue(PCBs, (void *)tempPCB);
+        if(theAlgorithm == SJF)
+            enqueue_sorted(PCBs, (void *)tempPCB,CompareRunningTime);
+        else if(theAlgorithm == SRTN)
+            enqueue_sorted(PCBs, (void *)tempPCB, CompareRemainingTime);
+        else
+            enqueue(PCBs, (void *)tempPCB);
     }
 
     // Reassign this function as SIGUSR1 handler
@@ -263,6 +323,128 @@ void First_Come_First_Serve_Scheduling(void)
         waiting_turnaround_time += getClk() - front_process_queue->arrivaltime;
         waiting_time += getClk() - front_process_queue->arrivaltime - front_process_queue->runningtime;
         //printf("This process waiting for %d cycles\n", getClk() - front_process_queue->arrivaltime - front_process_queue->runningtime);
+        free(front_process_queue);
+        numOfProcs--;    
+    }
+}
+
+void Shortest_Job_First_Scheduling(void)
+{
+    PCB *ptr_to_arriving_processes;
+
+    // Check if there is a new process from the new process handler
+    // If yes, add it to the ready priority queue (PCB_Scheduling_Queue)
+    if (!emptyQueue(PCBs))
+    {
+        dequeue(PCBs, (void *)&ptr_to_arriving_processes);
+        enqueue_sorted(PCB_Scheduling_Queue, (void *)ptr_to_arriving_processes, CompareRunningTime);
+    }
+
+    if (!emptyQueue(PCB_Scheduling_Queue))
+    {
+        runningProcess = true;
+        PCB *front_process_queue;
+        dequeue(PCB_Scheduling_Queue, (void *)&front_process_queue);
+
+        //printf("process with id %d is now running\n", front_process_queue->pid);
+
+        int end_time = getClk() + front_process_queue->remainingtime;
+
+        //printf("end_time=%d\n",end_time);
+
+        kill(front_process_queue->pid, SIGCONT);
+
+        int currTime = getClk();
+
+        *memAdr = front_process_queue->remainingtime;
+
+        prevRunningTime = runningTime;
+
+        while (front_process_queue->remainingtime > 0)
+        {
+            if (getClk() != currTime)
+            {
+                front_process_queue->remainingtime -= 1;
+                *memAdr = front_process_queue->remainingtime;
+                currTime = getClk();
+                runningTime += 1;
+            }
+            //printf("current_time=%d",getClk());
+            // blocking
+        }
+
+        
+        //fflush(stdin);
+
+        printf("Process with id %d and of RT=%d finished at time %d\n", front_process_queue->id, front_process_queue->runningtime,getClk());
+
+        //kill(front_process_queue->pid, SIGSTOP);
+
+        // Delete the allocated data for this PCB
+        waiting_turnaround_time += getClk() - front_process_queue->arrivaltime;
+        waiting_time += getClk() - front_process_queue->arrivaltime - front_process_queue->runningtime;
+        printf("This process waiting for %d cycles\n", getClk() - front_process_queue->arrivaltime - front_process_queue->runningtime);
+        free(front_process_queue);
+        numOfProcs--;    
+    }
+}
+
+void Shortest_Remaining_Time_Next_Scheduling(void)
+{
+PCB *ptr_to_arriving_processes;
+
+    // Check if there is a new process from the new process handler
+    // If yes, add it to the ready queue (PCB_Scheduling_Queue)
+    if (!emptyQueue(PCBs))
+    {
+        dequeue(PCBs, (void *)&ptr_to_arriving_processes);
+        enqueue_sorted(PCB_Scheduling_Queue, (void *)ptr_to_arriving_processes, CompareRemainingTime);
+    }
+
+    if (!emptyQueue(PCB_Scheduling_Queue))
+    {
+        runningProcess = true;
+        PCB *front_process_queue;
+        dequeue(PCB_Scheduling_Queue, (void *)&front_process_queue);
+
+        printf("process with id %d is now running\n", front_process_queue->pid);
+
+        int end_time = getClk() + front_process_queue->remainingtime;
+
+        printf("end_time=%d\n",end_time);
+
+        kill(front_process_queue->pid, SIGCONT);
+
+        int currTime = getClk();
+
+        *memAdr = front_process_queue->remainingtime;
+
+        prevRunningTime = runningTime;
+
+        while (front_process_queue->remainingtime > 0)
+        {
+            if (getClk() != currTime)
+            {
+                front_process_queue->remainingtime -= 1;
+                *memAdr = front_process_queue->remainingtime;
+                currTime = getClk();
+                runningTime += 1;
+            }
+            printf("current_time=%d",getClk());
+            // blocking
+        }
+
+        
+        //fflush(stdin);
+
+        printf("Process with id %d finished at time %d\n", front_process_queue->pid, getClk());
+
+        //kill(front_process_queue->pid, SIGSTOP);
+
+        // Delete the allocated data for this PCB
+        waiting_turnaround_time += getClk() - front_process_queue->arrivaltime;
+        waiting_time += getClk() - front_process_queue->arrivaltime - front_process_queue->runningtime;
+        printf("This process waiting for %d cycles\n", getClk() - front_process_queue->arrivaltime - front_process_queue->runningtime);
         free(front_process_queue);
         numOfProcs--;    
     }
@@ -342,7 +524,7 @@ void Round_Robin_Scheduling(void)
     }
 }
 
-void PreemtiveHighestPriorityFirst()
+void PreemptiveHighestPriorityFirst()
 {
     static PCB *newProc, *currentRunning, *dequeuePtr;
     static int currTime = 0;
@@ -427,6 +609,26 @@ void PreemtiveHighestPriorityFirst()
         printf("%s", "\n");
         ////////////////////////////////////////////////////
     }
+}
+
+int CompareRunningTime(void *left, void *right)
+{
+    PCB *leftObj = (PCB *)left, *rightObj = (PCB *)right;
+    if (leftObj->runningtime > rightObj->runningtime)
+        return -1;
+    else if (leftObj->runningtime < rightObj->runningtime)
+        return 1;
+    return 0;
+}
+
+int CompareRemainingTime(void *left, void *right)
+{
+    PCB *leftObj = (PCB *)left, *rightObj = (PCB *)right;
+    if (leftObj->runningtime > rightObj->runningtime)
+        return -1;
+    else if (leftObj->runningtime < rightObj->runningtime)
+        return 1;
+    return 0;
 }
 
 int ComparePriority(void *left, void *right)

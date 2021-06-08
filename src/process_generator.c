@@ -32,7 +32,7 @@ The process generator should simulate a real operating systems as follows:
 To view a dynamic array in VSCode, you can do *ptr@numElements in the watch window.
 So for a dynamic string called "line" with a length of 12, you do *line@12.
 If you ask for more elements than the pointer has allocated for itself, the extra elements
-wwill be garbage. 
+will be garbage. 
 */
 
 /* ============================================================================================= */
