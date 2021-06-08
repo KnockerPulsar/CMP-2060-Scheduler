@@ -33,7 +33,7 @@ void First_Come_First_Serve_Scheduling(void);
 void Round_Robin_Scheduling(void);
 void PreemtiveHighestPriorityFirst(void);
 
-// Reporting stuff
+// Variables used for output files
 bool runningProcess;
 float CPU_util;
 int runningTime;
@@ -42,6 +42,8 @@ int prevRunningTime;
 int numOfProcs;
 int waiting_time;
 int waiting_turnaround_time;
+QUEUE* LOG;
+QUEUE* PERF;
 
 // Comparison functions
 int ComparePriority(void *, void *);
@@ -73,16 +75,17 @@ int main(int argc, char *argv[])
 
     printf("S_P_MQid = %d\n", S_P_ShMemid);
 
-    // CPU_Utilization stuff & outputs
+    // Output file variables
+    LOG = createQueue();
+    PERF = createQueue();
+
     CPU_util = 0;
-    runningProcess = false;
     idleTime = 0;
     runningTime = 0;
     prevRunningTime = 0;
     numOfProcs = atoi(argv[2]);
     waiting_time = 0;
     waiting_turnaround_time = 0;
-    int num = numOfProcs;
 
     printf("The number of Processes to schedule is %d\n", numOfProcs);
 
@@ -152,9 +155,15 @@ int main(int argc, char *argv[])
     fflush(stdin);
     printf("Scheduler is done computing\n");
     printf("CPU Utilization: %f\n", CPU_util);
-    printf("Average Waiting time: %f\n", (float) waiting_time / num );
-    printf("Average Turnaround Waiting time: %f\n", (float) waiting_turnaround_time / num);
+    printf("Average Waiting time: %f\n", (float) waiting_time / runningTime );
+    printf("Average Turnaround Waiting time: %f\n", (float) waiting_turnaround_time / runningTime);
     destroyClk(true);
+}
+
+
+void Output_handling()
+{
+
 }
 
 void new_process_handler(int signum)

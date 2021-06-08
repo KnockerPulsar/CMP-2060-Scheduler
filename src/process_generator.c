@@ -151,7 +151,7 @@ int main(int argc, char *argv[])
                     temp /= 10;
                     c++;
                 }
-                char * str = malloc(sizeof(char) * c);
+                char * str = malloc( sizeof(char) * (c + 1) );
                 sprintf(str, "%d", lines);
                 printf("Scheduler child!\n");
                 execl("bin/scheduler", "scheduler", schedulingAlg, str, (char *) NULL);
