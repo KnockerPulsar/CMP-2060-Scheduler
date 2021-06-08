@@ -2,6 +2,14 @@
     "files.associations": {
         "queue.h": "c",
         "string.h": "c",
-        "headers.h": "c"
+        "headers.h": "c",
+        "array": "c",
+        "*.tcc": "c",
+        "memory": "c",
+        "istream": "c",
+        "functional": "c",
+        "tuple": "c",
+        "utility": "c",
+        "cmath": "c"
     }
 }

@@ -9,8 +9,8 @@ int main(int agrc, char *argv[])
 {
     initClk();
 
-    fflush(stdin);
-    printf("Process with PID %d initialized at time %d\n", getpid(), getClk());
+    //fflush(stdin);
+    //printf("Process with PID %d initialized at time %d\n", getpid(), getClk());
 
     int S_P_ShMemid = shmget(ftok(SCHED_PROC_QKEY, 'B'), sizeof(int) ,0666 |IPC_CREAT);
 
@@ -23,8 +23,8 @@ int main(int agrc, char *argv[])
         // Busy waiting
     }   
 
-    fflush(stdin);
-    printf("Terminating process with PID %d at time %d\n", getpid(), getClk());
+    //fflush(stdin);
+    //printf("Terminating process with PID %d at time %d\n", getpid(), getClk());
 
     destroyClk(false);
 

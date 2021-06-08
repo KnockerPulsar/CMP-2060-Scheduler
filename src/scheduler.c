@@ -36,14 +36,19 @@ void PreemtiveHighestPriorityFirst(void);
 // Variables used for output files
 bool runningProcess;
 float CPU_util;
-int runningTime;
-int idleTime;
-int prevRunningTime;
+int total_run_time;
 int numOfProcs;
-int waiting_time;
-int waiting_turnaround_time;
-QUEUE* LOG;
-QUEUE* PERF;
+float waiting_time;
+float weighted_turnaround_time;
+FILE * logFile;
+FILE * perfFile;
+//QUEUE* LOG;
+//QUEUE* PERF;
+
+int* Waiting;
+int* Running;
+
+int Enough;
 
 // Comparison functions
 int ComparePriority(void *, void *);
@@ -76,16 +81,18 @@ int main(int argc, char *argv[])
     printf("S_P_MQid = %d\n", S_P_ShMemid);
 
     // Output file variables
-    LOG = createQueue();
-    PERF = createQueue();
+    //LOG = createQueue();
+    //PERF = createQueue();
 
     CPU_util = 0;
-    idleTime = 0;
-    runningTime = 0;
-    prevRunningTime = 0;
+    total_run_time = 0;
     numOfProcs = atoi(argv[2]);
     waiting_time = 0;
-    waiting_turnaround_time = 0;
+    weighted_turnaround_time = 0;
+    int num = numOfProcs;
+    logFile = fopen(LOG, "w");
+    if (logFile == NULL)
+        printf("Error opening log file\n");
 
     printf("The number of Processes to schedule is %d\n", numOfProcs);
 
@@ -104,7 +111,7 @@ int main(int argc, char *argv[])
     case FCFS:
         PCB_Scheduling_Queue = createQueue();
         AlgoToRun = &First_Come_First_Serve_Scheduling;
-
+        
         break;
     case SJF:
 
@@ -124,53 +131,90 @@ int main(int argc, char *argv[])
     default:
         break;
     }
-    
+    fflush(stdin);
     int currTime = getClk();
-
     while (numOfProcs > 0)
     {
         AlgoToRun();
         
-        // Check if the CPU was idle for the last cycle
-
-        if (prevRunningTime == runningTime && currTime != getClk())
-        {
-            idleTime += 1;
-        }
-
-        if (currTime !=  getClk())
-        {
-        // Calculate & Report the CPU Utilization
-        if (idleTime == 0)
-            CPU_util = 100;
-        else
-            CPU_util = (runningTime / ( (float) idleTime + runningTime ) ) * 100;
-
-        currTime = getClk();
-        }
-        
-
     }
     
-    fflush(stdin);
-    printf("Scheduler is done computing\n");
-    printf("CPU Utilization: %f\n", CPU_util);
-    printf("Average Waiting time: %f\n", (float) waiting_time / runningTime );
-    printf("Average Turnaround Waiting time: %f\n", (float) waiting_turnaround_time / runningTime);
+    CPU_util = (total_run_time / ( (float) getClk()) * 100);
+    perfFile = fopen(PERF, "w");
+    if (perfFile == NULL)
+        printf("Error in opening the perf file\n");
+
+           // Take only the first two decimal digits after the floating point
+
+
+
+    weighted_turnaround_time /= num;
+
+    weighted_turnaround_time *= 100;
+    int temp = weighted_turnaround_time;
+    weighted_turnaround_time = temp / 100.0;
+
+    waiting_time /= num;
+    waiting_time *= 100;
+    temp = waiting_time;
+    waiting_time = temp / 100.0;
+
+    CPU_util *= 100;
+    temp = CPU_util;
+    CPU_util = temp / 100.0;
+
+    fprintf(perfFile, "CPU utilization = %0.2f%%\nAvg WTA = %0.2f\nAvg Waiting = %0.2f\n",
+     CPU_util, weighted_turnaround_time,  waiting_time);
+
+    fclose(perfFile);
+    fclose(logFile);
+
     destroyClk(true);
 }
 
 
-void Output_handling()
+void output_started(PCB * process)
 {
+    fprintf(logFile, "At time %d process %d started arr %d total %d remain %d wait %d\n", getClk(), process->id,
+    process->arrivaltime,process->runningtime, process->remainingtime, 
+    getClk() - process->arrivaltime - (process->runningtime - process->remainingtime) );
+}
 
+void output_finished(PCB * process)
+{
+    float temp = (getClk() - process->arrivaltime) / (float) process->runningtime;
+    temp *= 100;
+    int temp1 = temp;
+    temp = temp1 / 100.0;
+
+    fprintf(logFile, "At time %d process %d finished arr %d total %d remain %d wait %d TA %d WTA %0.2f\n", getClk(),
+    process->id,
+    process->arrivaltime,process->runningtime, process->remainingtime,
+    getClk() - process->arrivaltime - (process->runningtime - process->remainingtime),
+    getClk() - process->arrivaltime,  temp);
+
+    total_run_time += process->runningtime;
+}
+
+void output_stopped(PCB * process)
+{
+    fprintf(logFile, "At time %d process %d stopped arr %d total %d remain %d wait %d\n", getClk(), process->id,
+    process->arrivaltime,process->runningtime, process->remainingtime, 
+    getClk() - process->arrivaltime - (process->runningtime - process->remainingtime) );
+}
+
+void update_cpu_data(PCB* process)
+{
+    weighted_turnaround_time +=  (getClk() - process->arrivaltime) / (float) process->runningtime;
+    waiting_time += getClk() - process->arrivaltime - process->runningtime;
 }
 
 void new_process_handler(int signum)
 {
     int PG_S_recVal = msgrcv(PG_S_MQid, &processGenBuffer, sizeof(processGenBuffer.P), processGenBuffer.mtype, !IPC_NOWAIT);
     if (PG_S_recVal != -1)
-    {
+    {   
+        
         // For debugging
         //fflush(stdin);
         //printf("Process with id %d received at time %d\n", processGenBuffer.P.id, getClk());
@@ -231,13 +275,15 @@ void First_Come_First_Serve_Scheduling(void)
 
         //printf("end_time=%d\n",end_time);
 
-        kill(front_process_queue->pid, SIGCONT);
 
         int currTime = getClk();
 
         *memAdr = front_process_queue->remainingtime;
 
-        prevRunningTime = runningTime;
+
+        output_started(front_process_queue);
+
+        kill(front_process_queue->pid, SIGCONT);
 
         while (front_process_queue->remainingtime > 0)
         {
@@ -246,12 +292,11 @@ void First_Come_First_Serve_Scheduling(void)
                 front_process_queue->remainingtime -= 1;
                 *memAdr = front_process_queue->remainingtime;
                 currTime = getClk();
-                runningTime += 1;
             }
             //printf("current_time=%d",getClk());
             // blocking
         }
-
+        
         
         //fflush(stdin);
 
@@ -260,9 +305,12 @@ void First_Come_First_Serve_Scheduling(void)
         //kill(front_process_queue->pid, SIGSTOP);
 
         // Delete the allocated data for this PCB
-        waiting_turnaround_time += getClk() - front_process_queue->arrivaltime;
-        waiting_time += getClk() - front_process_queue->arrivaltime - front_process_queue->runningtime;
-        //printf("This process waiting for %d cycles\n", getClk() - front_process_queue->arrivaltime - front_process_queue->runningtime);
+
+        update_cpu_data(front_process_queue);
+
+
+        output_finished(front_process_queue);
+
         free(front_process_queue);
         numOfProcs--;    
     }
@@ -275,19 +323,20 @@ void Round_Robin_Scheduling(void)
     {
         PCB *front_process_queue;
         dequeue(PCB_Scheduling_Queue, (void *)&front_process_queue);
-
-        //printf("process with id %d is now running\n", front_process_queue->pid);
+        //printf("process with id %d is now running at time %d\n", front_process_queue->id, getClk());
 
         //int end_time = getClk() + front_process_queue->remainingtime;
 
-        //printf("end_time=%d\n",end_time);
 
         int time_at_entry = getClk();
         int currTime = getClk();
         kill(front_process_queue->pid, SIGCONT);
         *memAdr = front_process_queue->remainingtime;
 
-        // the loop will comtmiue until the QUANTUM is finished or the time of queue is finished
+
+        output_started(front_process_queue);
+
+        // the loop will continue until the QUANTUM is finished or the time of queue is finished
         while (currTime < (time_at_entry + QUANTUM) && front_process_queue->remainingtime != 0)
         {
             if (getClk() != currTime) // update the time each time clock changes
@@ -301,35 +350,52 @@ void Round_Robin_Scheduling(void)
         bool flag = (front_process_queue->remainingtime == 0) ? 0 : 1;
         if (flag) // if the process has to run again
         {
+            //printf("process with id %d is now stopping at time %d\n", front_process_queue->id, getClk());
             kill(front_process_queue->pid, SIGSTOP);
+            output_stopped(front_process_queue);
         }
         else //free the memory if the process is finished
         {
+            //printf("process with id %d is now finishing at time %d\n", front_process_queue->id, getClk());
+            output_finished(front_process_queue);
+            update_cpu_data(front_process_queue);
             free(front_process_queue);
+            numOfProcs--;
         }
         currTime = getClk();
         //get all the newly added processes while the Quantum was running
-        while (!emptyQueue(PCBs))
+        if (!emptyQueue(PCBs))
         {
             dequeue(PCBs, (void *)&ptr_to_arriving_processes);
-            if (ptr_to_arriving_processes->arrivaltime < currTime)
+
+            // Take all processes that arrived before current clock cycle and add them to the 
+            // Scheduling queue
+            while( ptr_to_arriving_processes->arrivaltime < currTime)
             {
                 enqueue(PCB_Scheduling_Queue, (void *)ptr_to_arriving_processes);
+                if (!emptyQueue(PCBs))
+                    dequeue(PCBs, (void *)&ptr_to_arriving_processes);
+                else
+                    break;
             }
 
-            //if there is newly added process in the same time
-            // the previously running process ends
-            // then the priorituy goes to the previoulsy running process
-            else if (flag)
-            {
+            if (flag)
                 enqueue(PCB_Scheduling_Queue, (void *)front_process_queue);
-                enqueue(PCB_Scheduling_Queue, (void *)ptr_to_arriving_processes);
-                flag = 0;
-            }
-            else
+
+            if (ptr_to_arriving_processes->arrivaltime == currTime)
             {
                 enqueue(PCB_Scheduling_Queue, (void *)ptr_to_arriving_processes);
+                while(!emptyQueue(PCBs))
+                {
+                    dequeue(PCBs, (void *)&ptr_to_arriving_processes);
+                    enqueue(PCB_Scheduling_Queue, (void *)ptr_to_arriving_processes);
+                }
             }
+        }
+        else
+        {
+            if (flag)
+                enqueue(PCB_Scheduling_Queue, (void *)front_process_queue);
         }
     }
 
@@ -344,44 +410,51 @@ void Round_Robin_Scheduling(void)
 
 void PreemtiveHighestPriorityFirst()
 {
+    
     static PCB *newProc, *currentRunning, *dequeuePtr;
     static int currTime = 0;
+    fflush(stdin);
+    
 
     // Check for an incoming process
     // If the process queue has a process, consume it
     if (!emptyQueue(PCBs))
     {
         dequeue(PCBs, (void *)(&newProc));
-        printf("Process with ID: %d, remaining time: %d, priority: %d arrived. ", newProc->id, newProc->remainingtime, newProc->priority);
+        
+        printf("Process with ID: %d, remaining time: %d, priority: %d arrived\n", newProc->id, newProc->remainingtime, newProc->priority);
         currTime = getClk();
-
-        if (currTime != getClk())
-        {
-            printf("[%d] ", currTime);
-            fflush(stdout);
-        }
+        
+        // if (currTime != getClk())
+        // {
+        //     printf("[%d] ", currTime);
+        //     fflush(stdout);
+        // }
 
         // If first process
         if (emptyQueue(PCB_Scheduling_Queue))
         {
-            printf("%s", "The process is alone, inserting at the front of the queue. ");
+            printf("%s", "The process is alone, inserting at the front of the queue\n");
             enqueue(PCB_Scheduling_Queue, (void *)newProc);
             currentRunning = newProc;
             *memAdr = currentRunning->remainingtime;
             kill(currentRunning->pid, SIGCONT);
+            output_started(currentRunning);
         }
         else
         {
-            printf("%s", "There are other processes, inserting somewhere in the queue. ");
+            printf("%s", "There are other processes, inserting somewhere in the queue\n");
             // If there's one, check if its priority is higher than the current priority
             if (ComparePriority(newProc, currentRunning) == 1)
             // If so, send SIGSTOP to the current process, place the new one in the queue, and send SIGSTRT to it if needed
             {
-                printf("%s", "Process has higher priority than the current running process, replacing. ");
+                printf("%s", "Process has higher priority than the current running process, replacing\n");
                 kill(currentRunning->pid, SIGSTOP);
+                output_stopped(currentRunning);
                 currentRunning = newProc;
                 *memAdr = currentRunning->remainingtime;
                 kill(currentRunning->pid, SIGCONT);
+                output_started(currentRunning);
             }
             // If its priority is less, just enqueue
             enqueue_sorted(PCB_Scheduling_Queue, (void *)newProc, ComparePriority);
@@ -393,28 +466,36 @@ void PreemtiveHighestPriorityFirst()
 
     // TODO Update the running process's remaining time through the shared memory segment
 
+    
+
     if (currTime != getClk())
     {
         currTime = getClk();
 
         // If there are no incoming processes, just run the current process
         currentRunning->remainingtime--;
-
+        *memAdr = currentRunning->remainingtime;
+        
         // If the process's time is out, remove it from the queue
         if (currentRunning->remainingtime == 0)
         {
-            printf("%s", "A process has finished running, removing from the queue. ");
+            printf("%s", "A process has finished running, removing from the queue\n");
+            output_finished(currentRunning);
+            update_cpu_data(currentRunning);
             dequeue(PCB_Scheduling_Queue, (void *)(&dequeuePtr));
+            free(dequeuePtr);
+            numOfProcs--;
 
             if (queueFront(PCB_Scheduling_Queue, (void *)(&dequeuePtr)))
             {
-                printf("%s", "There are other processes left, dequeuing one. ");
+                printf("%s", "There are other processes left, dequeuing one\n");
                 currentRunning = dequeuePtr;
                 *memAdr = currentRunning->remainingtime;
+                output_started(currentRunning);
                 kill(currentRunning->pid, SIGCONT);
             }
         }
-        printf("%d\n", *memAdr);
+        //printf("%d\n", *memAdr);
         *memAdr = currentRunning->remainingtime;
 
         // View queue
