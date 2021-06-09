@@ -390,6 +390,8 @@ void new_process_handler(int signum)
         //enqueue(WaitingPCBs, (void *) tempPCB);
         _insert(WaitingPCBs, WaitingPCBs->rear, (void *)tempPCB);
 
+        //printf("mem size %d\n" ,( (PCB *) WaitingPCBs->head->dataPtr)->memsize );
+
         //printf("process with id %d needs memory %d\n", tempPCB->id, tempPCB->memsize);
         // Add this process to the new processes queue
         // The selected Algo can then take this new process and add it
@@ -904,13 +906,15 @@ void First_Fit_memAlgo(void)
     {
         isForked = 0;
         //logic for first fit
-        PCB *process_to_allocate = (PCB *)iterator_processes;
+        PCB *process_to_allocate = (PCB *)iterator_processes->dataPtr;
         while (iterator_memory)
         {
             memory_fragment *memory_to_cut = (memory_fragment *)(iterator_memory->dataPtr);
+            
             bool flag1= (memory_to_cut->theState ==GAP);
             int free_size=memory_to_cut->length-memory_to_cut->start_position;
             bool flag2= (free_size >=process_to_allocate->memsize);
+            //printf("process mem size %d\n",process_to_allocate->memsize);
             if(flag1 && flag2)
             {
                 // take the needed part now ;
