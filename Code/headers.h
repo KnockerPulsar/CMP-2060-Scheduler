@@ -89,6 +89,7 @@ typedef struct PCB
     int priority;
     int runningtime;
     int remainingtime;
+    int memsize;
 }PCB;
 
 
@@ -104,14 +105,6 @@ typedef enum Scheduling_Algorithm_Type
     RR
 }Scheduling_Algorithm_Type;
 
-typedef enum Mem_Allocation_Type
-{
-    PLACEHOLDER1,
-    FF,
-    NF,
-    BF,
-    BSA
-}Mem_Allocation_Type;
 
 // Struct for communication between the scheduler & the process
 // Currently being used to send the remaining time
@@ -134,12 +127,14 @@ typedef struct memory_fragment
 {
     int start_position;
     int length;
+    int id;
     mem_state theState;
 
 }memory_fragment;
 
 typedef enum MemoryAlgorithm
 {
+    PLACEHOLDER1,
     FF,
     NF,
     BF,
