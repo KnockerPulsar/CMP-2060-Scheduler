@@ -11,5 +11,10 @@
         "tuple": "c",
         "utility": "c",
         "cmath": "c"
-    }
+    },
+    "cSpell.words": [
+        "MEMEORY",
+        "QKEY",
+        "SRTN"
+    ]
 }

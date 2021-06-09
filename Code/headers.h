@@ -95,6 +95,7 @@ typedef struct PCB
 // so the scheduler will know which algo to perform
 typedef enum Scheduling_Algorithm_Type
 {
+    PLACEHOLDER,
     FCFS,
     SJF,
     HPF,
