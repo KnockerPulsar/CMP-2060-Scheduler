@@ -4,3 +4,4 @@
 #define SCHED_PROC_QKEY "../keys/S_P.txt"
 #define LOG "out/scheduler.log"
 #define PERF "out/scheduler.perf"
+#define MEM "out/memory.log"

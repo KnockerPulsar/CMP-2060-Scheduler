@@ -90,6 +90,7 @@ typedef struct PCB
     int runningtime;
     int remainingtime;
     int memsize;
+    void * memoryNode;
 }PCB;
 
 

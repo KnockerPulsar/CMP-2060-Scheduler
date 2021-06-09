@@ -27,6 +27,9 @@ QUEUE *PCBs;
 // Contains all processes that are waiting to be allocated
 LIST *WaitingPCBs;
 
+//
+NODE *NextPosition = NULL;
+
 //Used to store the Algorithm number. If this number is equal to 2 then elements are enqueued sorted by Running time in PCBs
 // If this number is equal to 4 then elements are enqueued sorted by Remaining time in PCBs
 // Any other algorithm is sorted normally
@@ -61,6 +64,7 @@ float waiting_time;
 float weighted_turnaround_time;
 FILE *logFile;
 FILE *perfFile;
+FILE *memFile;
 char *InputFileName;
 int QUANTUM;
 int memAlgo;
@@ -199,6 +203,9 @@ int main(int argc, char *argv[])
     logFile = fopen(LOG, "w");
     if (logFile == NULL)
         printf("Error opening log file\n");
+    memFile = fopen(MEM, "w");
+    if (memFile == NULL)
+        printf("Error in opening memory log file\n");
 
     printf("The number of Processes to schedule is %d\n", numOfProcs);
     // TODO: depending on the value of sigAlgo, make the required Datastructures & use them
@@ -325,6 +332,36 @@ void update_cpu_data(PCB *process)
     waiting_time += getClk() - process->arrivaltime - process->runningtime;
 }
 
+void output_allocate(PCB *process)
+{
+    // fprintf(memFile, "At time %d allocated %d bytes for process %d from %d to %d\n",
+    // getClk(), process->memsize, process->id,
+    // ((memory_fragment *) process->memoryNode)->start_position,
+    // ((memory_fragment *) process->memoryNode)->start_position +
+    // ((memory_fragment *) process->memoryNode)->length - 1);
+    fflush(stdin);
+    printf("At time %d allocated %d bytes for process %d from %d to %d\n",
+    getClk(), process->memsize, process->id,
+    ((memory_fragment *) process->memoryNode)->start_position,
+    ((memory_fragment *) process->memoryNode)->start_position +
+    ((memory_fragment *) process->memoryNode)->length - 1);
+}
+
+void output_deallocate(PCB *process)
+{
+    // fprintf(memFile, "At time %d freed %d bytes for process %d from %d to %d\n",
+    // getClk(), process->memsize, process->id,
+    // ((memory_fragment *) process->memoryNode)->start_position,
+    // ((memory_fragment *) process->memoryNode)->start_position +
+    // ((memory_fragment *) process->memoryNode)->length - 1);
+    fflush(stdin);
+    printf("At time %d allocated %d bytes for process %d from %d to %d\n",
+    getClk(), process->memsize, process->id,
+    ((memory_fragment *) process->memoryNode)->start_position,
+    ((memory_fragment *) process->memoryNode)->start_position +
+    ((memory_fragment *) process->memoryNode)->length - 1);
+}
+
 void new_process_handler(int signum)
 {
     int PG_S_recVal = msgrcv(PG_S_MQid, &processGenBuffer, sizeof(processGenBuffer.P), processGenBuffer.mtype, !IPC_NOWAIT);
@@ -360,6 +397,7 @@ void new_process_handler(int signum)
         //enqueue(WaitingPCBs, (void *) tempPCB);
         _insert(WaitingPCBs, WaitingPCBs->rear, (void *)tempPCB);
 
+        //printf("process with id %d needs memory %d\n", tempPCB->id, tempPCB->memsize);
         // Add this process to the new processes queue
         // The selected Algo can then take this new process and add it
         // To its ready queue (could different for every Algorithm)
@@ -405,6 +443,10 @@ void First_Come_First_Serve_Scheduling(void)
 
         output_started(front_process_queue);
 
+        // deallocate reserved space for process
+        deallocateMemory(front_process_queue->id);
+        // TODO: Add Output function for process deallocation
+
         kill(front_process_queue->pid, SIGCONT);
 
         while (front_process_queue->remainingtime > 0)
@@ -430,6 +472,13 @@ void First_Come_First_Serve_Scheduling(void)
         update_cpu_data(front_process_queue);
 
         output_finished(front_process_queue);
+
+        output_deallocate(front_process_queue);
+
+        if (memAlgo != BSA)
+            deallocateMemory(front_process_queue->id);
+        else
+            deallocateMemory_BSA(front_process_queue->id);
 
         free(front_process_queue);
         /*
@@ -857,17 +906,19 @@ void First_Fit_memAlgo(void)
 {
     NODE *iterator_processes = WaitingPCBs->head;
     NODE *iterator_memory = MemoryList->head;
+    bool isForked = 0;
     while (iterator_processes)
     {
+        isForked = 0;
         //logic for first fit
         PCB *process_to_allocate = (PCB *)iterator_processes;
         while (iterator_memory)
         {
             memory_fragment *memory_to_cut = (memory_fragment *)(iterator_memory->dataPtr);
-            bool flag1 = (memory_to_cut->theState == GAP);
-            int free_size = memory_to_cut->length - memory_to_cut->start_position;
-            bool flag2 = (free_size == process_to_allocate->memsize);
-            if (flag1 == flag2)
+            bool flag1= (memory_to_cut->theState ==GAP);
+            int free_size=memory_to_cut->length-memory_to_cut->start_position;
+            bool flag2= (free_size >=process_to_allocate->memsize);
+            if(flag1 && flag2)
             {
                 // take the needed part now ;
                 memory_fragment *memory_needed = (memory_fragment *)malloc(sizeof(memory_fragment));
@@ -878,17 +929,161 @@ void First_Fit_memAlgo(void)
 
                 int new_beginnig = memory_needed->start_position + memory_needed->length;
                 new_beginnig++;
+                printf("new beginning = %d\n", new_beginnig);
 
                 memory_to_cut->length -= memory_needed->length;
+                printf("memory_to_cut length = %d\n", memory_to_cut->length);
                 memory_to_cut->start_position = new_beginnig;
-
                 _insert(MemoryList, get_before_node(MemoryList, iterator_memory), (void *)memory_needed);
+                //needed to make the PCB point to  its node in memory
+                process_to_allocate->memoryNode = (void *)memory_needed;
+                // needed to enqueue in pcb
+                // Fork the new process, send it to the process file
+                int pid = fork();
+                if (pid == 0) // Child
+                {
+                    execl("process", "process", (char *)NULL);
+                }
+                //Pause the process that we just forked
+                kill(pid, SIGSTOP);
+                process_to_allocate->pid = pid;
+                enqueue(PCBs, (void *)process_to_allocate);
+                output_allocate(process_to_allocate);
+                printf("done forking");
+                isForked = 1;
+                break;
             }
+            iterator_memory = iterator_memory->link;
         }
+        NODE *next_process = iterator_processes->link;
+        if (isForked)
+        {
+            void *dummyPTR;
+            _delete(WaitingPCBs, get_before_node(WaitingPCBs, iterator_processes), iterator_processes, &(dummyPTR));
+        }
+        iterator_processes = next_process;
     }
 
     // itterate on waitnngPCB and then fill PCB
     // algorithm to to allocate and then
+}
+
+void Next_Fit_memAlgo(void)
+{
+    // Loop Starting the next available fit.
+    // The Next empty unallocated memory fragment
+    // is stored in NODE* NextPosition which is a global variable
+
+    // If there are no proesses waiting to be allocated
+    //if (emptyQueue(WaitingPCBs))
+    //return;
+    if (WaitingPCBs->count == 0)
+        return;
+
+    NODE *ProcessToBeChecked = WaitingPCBs->head;
+    int CheckForFullLoop = MemoryList->count;
+    while (ProcessToBeChecked != NULL)
+    {
+        if (NextPosition == NULL) //The memory list is still totally unoccupied
+        {
+            PCB *ptr_to_waiting_processes = (PCB *)(WaitingPCBs->head->dataPtr);
+            //Remove the process from the WaitingPCBs
+            //dequeue(WaitingPCBs, (void *)&ptr_to_waiting_processes);
+            //Get the Next empty (and only GAP memory segment)
+            memory_fragment *memory_to_cut = (memory_fragment *)(NextPosition->dataPtr);
+            memory_to_cut->length = memory_to_cut->length - ptr_to_waiting_processes->memsize;
+            memory_to_cut->start_position = memory_to_cut->start_position + ptr_to_waiting_processes->memsize;
+            memory_to_cut->theState = GAP;
+            // Create a new memory segment
+            memory_fragment *memory_needed = (memory_fragment *)malloc(sizeof(memory_fragment));
+            memory_needed->theState = PROCESS;
+            memory_needed->id = ptr_to_waiting_processes->id;
+            memory_needed->start_position = memory_to_cut->start_position;
+            memory_needed->length = ptr_to_waiting_processes->memsize;
+            ptr_to_waiting_processes->memoryNode = memory_needed;
+            _insert(MemoryList, get_before_node(MemoryList, NextPosition), (void *)memory_needed);
+            // Fork the new process, send it to the process file
+            int pid = fork();
+            if (pid == 0) // Child
+            {
+                execl("process", "process", (char *)NULL);
+            }
+            //Pause the process that we just forked
+            kill(pid, SIGSTOP);
+            ptr_to_waiting_processes->pid = pid;
+            void *dummyPTR;
+            _delete(WaitingPCBs, get_before_node(WaitingPCBs, ptr_to_waiting_processes), ptr_to_waiting_processes, &(dummyPTR));
+            //Insert it into the PCBs Queue
+            if (theAlgorithm == SJF)
+                enqueue_sorted(PCBs, (void *)ptr_to_waiting_processes, CompareRunningTime);
+            else if (theAlgorithm == SRTN)
+                enqueue_sorted(PCBs, (void *)ptr_to_waiting_processes, CompareRemainingTime);
+            else
+                enqueue(PCBs, (void *)ptr_to_waiting_processes);
+            //To point to the head of the linked list after removing the first object
+            ProcessToBeChecked = WaitingPCBs->head;
+            continue;
+        }
+        // Loop through the memory fragments starting from the NextPosition NODE
+        while (NextPosition != NULL)
+        {
+            PCB *ptr_to_waiting_processes = (PCB *)(ProcessToBeChecked->dataPtr);
+            //Remove the process from the WaitingPCBs
+            //dequeue(WaitingPCBs, (void *)&ptr_to_waiting_processes);
+            //Get the Next empty (and only GAP memory segment)
+            memory_fragment *memory_to_cut = (memory_fragment *)(NextPosition->dataPtr);
+            if (memory_to_cut->theState == GAP)
+            {
+                memory_fragment *memory_needed = (memory_fragment *)malloc(sizeof(memory_fragment));
+                if (memory_to_cut->length >= ptr_to_waiting_processes->memsize)
+                {
+                    if (memory_to_cut->length > ptr_to_waiting_processes->memsize)
+                    {
+                        memory_to_cut->length = memory_to_cut->length - ptr_to_waiting_processes->memsize;
+                        memory_to_cut->start_position = memory_to_cut->start_position + ptr_to_waiting_processes->memsize;
+                        memory_to_cut->theState = GAP;
+                        // Create a new memory segment
+                        memory_needed->theState = PROCESS;
+                        memory_needed->id = ptr_to_waiting_processes->id;
+                        memory_needed->start_position = memory_to_cut->start_position;
+                        memory_needed->length = ptr_to_waiting_processes->memsize;
+                        ptr_to_waiting_processes->memoryNode = memory_needed;
+                        _insert(MemoryList, get_before_node(MemoryList, NextPosition), (void *)memory_needed);
+                    }
+                    else//In case they're equal
+                    {
+                        memory_to_cut->theState = PROCESS;
+                        memory_to_cut->id = ptr_to_waiting_processes->id;
+                        memory_to_cut->length = ptr_to_waiting_processes->memsize;
+                        ptr_to_waiting_processes->memoryNode = memory_to_cut;
+                    }
+                }
+                // Fork the new process, send it to the process file
+                int pid = fork();
+                if (pid == 0) // Child
+                {
+                    execl("process", "process", (char *)NULL);
+                }
+                //Pause the process that we just forked
+                kill(pid, SIGSTOP);
+                ptr_to_waiting_processes->pid = pid;
+                ProcessToBeChecked = ProcessToBeChecked->link;
+                void *dummyPTR;
+                _delete(WaitingPCBs, get_before_node(WaitingPCBs, ptr_to_waiting_processes), ptr_to_waiting_processes, &(dummyPTR));
+                //Insert it into the PCBs Queue
+                if (theAlgorithm == SJF)
+                    enqueue_sorted(PCBs, (void *)ptr_to_waiting_processes, CompareRunningTime);
+                else if (theAlgorithm == SRTN)
+                    enqueue_sorted(PCBs, (void *)ptr_to_waiting_processes, CompareRemainingTime);
+                else
+                    enqueue(PCBs, (void *)ptr_to_waiting_processes);
+                
+                break;
+            }
+            NextPosition = NextPosition->link;
+        }
+        ProcessToBeChecked = ProcessToBeChecked->link;
+    }
 }
 
 void deallocateMemory(int process_id) // only called for ff,nf,bf
