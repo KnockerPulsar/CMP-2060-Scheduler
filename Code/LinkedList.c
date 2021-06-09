@@ -20,7 +20,7 @@ LIST *createList(int (*compare)(void *argu1, void *argu2))
         list->head = NULL;
         list->pos = NULL;
         list->rear = NULL;
-            
+
         list->compare = compare;
     } // if
     return list;
@@ -127,8 +127,7 @@ Post Data have been deleted and returned
 Data memory has been freed
 */
 
-
-// this function take pointr to list, pre node, the node 
+// this function take pointr to list, pre node, the node
 //  , pointer to point to the data inside the deleted node
 void _delete(LIST *pList, NODE *pPre,
              NODE *pLoc, void **dataOutPtr)
@@ -359,3 +358,20 @@ LIST *destroyList(LIST *pList)
     } // if
     return NULL;
 } // destroyList
+
+//added by hadidy
+
+NODE *get_before_node(LIST *theList, NODE *givenNode)
+{
+    if (givenNode == theList->head)
+    {
+        return NULL; // so in _insert functoin, it will know that we
+                    // want to make the node before head
+    }
+    NODE *iterator = theList->head;
+    while (iterator->link != givenNode)
+    {
+        iterator = iterator->link;
+    }
+    return iterator;
+}

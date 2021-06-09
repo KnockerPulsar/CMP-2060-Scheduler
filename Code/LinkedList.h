@@ -62,4 +62,7 @@ bool _search(LIST *pList,
              void *pArgu);
 //End of List ADT Definitions
 
+
+NODE* get_before_node(LIST* theList,NODE* givenNode);
+
 #endif
