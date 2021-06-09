@@ -49,11 +49,7 @@ FILE *logFile;
 FILE *perfFile;
 char *InputFileName;
 int QUANTUM;
-
-int *Waiting;
-int *Running;
-
-int Enough;
+int memAlgo;
 
 // Comparison functions
 int CompareRunningTime(void *, void *);
@@ -102,7 +98,7 @@ int main(int argc, char *argv[])
     total_run_time = 0;
     numOfProcs = atoi(argv[2]);
 
-    InputFileName = argv[3]; //Uncomment after changing the project structure --> Probably won't need it anyway
+    //InputFileName = argv[3]; //Uncomment after changing the project structure --> Probably won't need it anyway
     //Uncomment after changing the project structure --> Used to count the number of processes
     // FILE *ptrToFile;
     // numOfProcs = 0;
@@ -144,9 +140,15 @@ int main(int argc, char *argv[])
     // we should determine the algo from the args in process generator
     theAlgorithm = atoi(argv[1]);
     if (theAlgorithm == RR)
-        QUANTUM = atoi(argv[4]);
+    {
+        QUANTUM = atoi(argv[3]);
+        memAlgo = atoi(argv[4]);
+    }
     else
+    {
         QUANTUM = 0;
+        memAlgo = atoi(argv[3]);
+    }
 
     //printf("Quantum= %d\n", QUANTUM);
 

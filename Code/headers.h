@@ -69,8 +69,8 @@ typedef struct processData
     int priority;
     int runningtime;  
     int id;
-    //int remaining_time
     int memsize;
+    //int remaining_time
 } processData;
 
 // Message buffer for communication between Process Generator & the Scheduler
@@ -103,6 +103,15 @@ typedef enum Scheduling_Algorithm_Type
     SRTN,
     RR
 }Scheduling_Algorithm_Type;
+
+typedef enum Mem_Allocation_Type
+{
+    PLACEHOLDER1,
+    FF,
+    NF,
+    BF,
+    BSA
+}Mem_Allocation_Type;
 
 // Struct for communication between the scheduler & the process
 // Currently being used to send the remaining time
