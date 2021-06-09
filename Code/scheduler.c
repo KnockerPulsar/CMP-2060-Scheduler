@@ -5,8 +5,7 @@
 
 //#define QUANTUM 3
 
-// TODO: Finish the other scheduling algorithms in the same way as the FCFS --> Done
-// TODO: Work on the output data --> Done
+
 // TODO: in PG, clear all IPC recources
 
 // Variables for communication between the PG & the scheduler

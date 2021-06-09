@@ -47,6 +47,10 @@ processData *ReadSimData(char *filePath);
 int lines;
 char* Quantum;
 
+// IPC resources
+int procGenSchedMsqQID;
+int SchedProcShMemID;
+
 /* ============================================================================================= */
 
 // Assuming the process data file and scheduling algorithm number will be passed to this file.
@@ -78,7 +82,7 @@ int main(int argc, char *argv[])
     // File path should be ().txt, so at least 5 chars
     if (strlen(pDataPath) < 5)
     {
-        perror("\nPROCESS GENERATOR ERRO: INVALID FILE PATH");
+        perror("\nPROCESS GENERATOR ERROR: INVALID FILE PATH");
         exit(1);
     }
 
@@ -87,7 +91,19 @@ int main(int argc, char *argv[])
     // 2. Read the chosen scheduling algorithm and its parameters, if there are any from the argument list.
     /* ============================================================================================= */
 
+    for (int i = 0;i< argc;i++)
+        printf("%s\n", argv[i]);
+
+        
+    if (strcmp(argv[2], "-sch"))
+    {
+        printf("ERROR: Incorrect argument formating, make sure to include -sch\n");
+        raise(SIGINT);
+    }
+
     char *schedulingAlg = argv[3];
+
+
     if(atoi(schedulingAlg) == RR)
         Quantum = argv[5];
     //else
@@ -98,7 +114,7 @@ int main(int argc, char *argv[])
     // Before forking the scheduler, let's create the message queue we will send the process data over
 
     // Added a cast to please the compiler, hope it doesn't cause issues
-    int procGenSchedMsqQID = msgget(ftok(PROCGEN_SCHED_QKEY, 'A'), 0666 | IPC_CREAT);
+    procGenSchedMsqQID = msgget(ftok(PROCGEN_SCHED_QKEY, 'A'), 0666 | IPC_CREAT);
     if (procGenSchedMsqQID == -1)
     {
         perror("PROCESS GENERATOR: Error in creating the PG_S MQ\n");
@@ -114,7 +130,7 @@ int main(int argc, char *argv[])
     // This will be mainly used to send the remaining time to each process so that the process
     // Will terminate itself at remaining time = 0
 
-    int SchedProcShMemID = shmget(ftok(SCHED_PROC_QKEY, 'B'), sizeof(int), 0666 | IPC_CREAT);
+    SchedProcShMemID = shmget(ftok(SCHED_PROC_QKEY, 'B'), sizeof(int), 0666 | IPC_CREAT);
 
     if (SchedProcShMemID == -1)
     {
@@ -213,6 +229,10 @@ int main(int argc, char *argv[])
 void clearResources(int sig_num)
 {
     printf("\nINTERRUPTED\n");
+    
+    msgctl(procGenSchedMsqQID, IPC_RMID, NULL);
+    shmctl(SchedProcShMemID, IPC_RMID, (struct shmid_ds *)0);
+
     killpg(getpgrp(), SIGINT);
     exit(0);
 }
@@ -237,7 +257,7 @@ processData *ReadSimData(char *filePath)
     // Allocating the buffer and creating a pointer to the start since getline() doesn't like passing
     // the char array...
     char line[buffSize], *linePtr = line;
-
+    
     // First parameter is a reference to a string, where the line will be returned
     // Second one is the length of the string of avoid overflows I guess
     // Third parameter is the filestream we're reading from
