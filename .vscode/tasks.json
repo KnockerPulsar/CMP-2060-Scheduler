@@ -8,6 +8,8 @@
                 "-g",
                 "${file}",
                 "BuddyBinaryTree.c",
+                "LinkedList.c",
+                "queue.c",
                 "-o",
                 "${fileDirname}/${fileBasenameNoExtension}"
             ],

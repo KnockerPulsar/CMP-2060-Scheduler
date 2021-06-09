@@ -81,18 +81,35 @@ int main(int argc, char *argv[])
     initClk();
     // if the scheduler receives this signal, it means that the PG is sending it a new process
     signal(SIGUSR1, new_process_handler);
+
+    theAlgorithm = atoi(argv[1]);
+    if (theAlgorithm == RR)
+    {
+        QUANTUM = atoi(argv[3]);
+        memAlgo = atoi(argv[4]);
+    }
+    else
+    {
+        QUANTUM = 0;
+        memAlgo = atoi(argv[3]);
+    }
+
     //******************************MEMORY INIT*************************//
+
     void (*MemAlgoToRun)(void);
     switch (memAlgo)
     {
     case FF:
         MemoryList = createList(&dummy_compare);
+        
         memory_fragment *initMem;
         initMem = (memory_fragment *)malloc(sizeof(memory_fragment));
         initMem->theState = GAP;
         initMem->start_position = 0;
         initMem->length = 1024;
         _insert(MemoryList, MemoryList->rear, (void *)initMem);
+
+
         MemAlgoToRun = &First_Fit_memAlgo;
         //todo: function_pointer= FF algo
         break;
@@ -181,7 +198,6 @@ int main(int argc, char *argv[])
         printf("Error opening log file\n");
 
     printf("The number of Processes to schedule is %d\n", numOfProcs);
-
     // TODO: depending on the value of sigAlgo, make the required Datastructures & use them
     // the Algorithm should be equal to the wanted Algorithm (from 1 to 5 as in the document)
     //1. First Come First Serve (FCFS)
@@ -190,17 +206,7 @@ int main(int argc, char *argv[])
     //4. Shortest Remaining Time Next (SRTN)
     //5. Round Robin (RR)
     // we should determine the algo from the args in process generator
-    theAlgorithm = atoi(argv[1]);
-    if (theAlgorithm == RR)
-    {
-        QUANTUM = atoi(argv[3]);
-        memAlgo = atoi(argv[4]);
-    }
-    else
-    {
-        QUANTUM = 0;
-        memAlgo = atoi(argv[3]);
-    }
+    
 
     //printf("Quantum= %d\n", QUANTUM);
 
@@ -920,7 +926,7 @@ void deallocateMemory(int process_id) // only called for ff,nf,bf
     NODE* prev = ptr; // ptr to prev node;
     NODE* temp;
     
-    while (ptr != NULL || found)
+    while (ptr != NULL && !found)
     {
         if ( ( (memory_fragment *) ptr->dataPtr )->id == process_id )
         {
@@ -966,6 +972,7 @@ void deallocateMemory(int process_id) // only called for ff,nf,bf
                 if (( (memory_fragment *) prev->dataPtr )->theState == GAP)
                 {
                     ( (memory_fragment *) prev->dataPtr )->length += ( (memory_fragment *) ptr->dataPtr )->length;
+                    ( (memory_fragment *) prev->dataPtr )->id = -1;
                     prev->link = ptr->link;
                     free(ptr->dataPtr);
                     free(ptr);
@@ -988,6 +995,7 @@ void deallocateMemory(int process_id) // only called for ff,nf,bf
                 {
                     ( (memory_fragment *) prev->dataPtr )->length += ( (memory_fragment *) ptr->dataPtr )->length +
                     ( (memory_fragment *) temp->dataPtr )->length;
+                    ( (memory_fragment *) prev->dataPtr )->id = -1;
                     prev->link = temp->link;
                     if (MemoryList->rear == temp)
                         MemoryList->rear = prev;
@@ -1001,6 +1009,7 @@ void deallocateMemory(int process_id) // only called for ff,nf,bf
                 ( (memory_fragment *) temp->dataPtr )->theState != GAP)
                 {
                     ( (memory_fragment *) prev->dataPtr )->length += ( (memory_fragment *) ptr->dataPtr )->length;
+                    ( (memory_fragment *) prev->dataPtr )->id = -1;
                     prev->link = ptr->link;
                     free(ptr->dataPtr);
                     free(ptr);
@@ -1040,4 +1049,5 @@ void deallocateMemory(int process_id) // only called for ff,nf,bf
 }
 void deallocateMemory_BSA(int process_id) //ony for BSA
 {
+
 }
