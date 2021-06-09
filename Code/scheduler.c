@@ -988,7 +988,7 @@ void Next_Fit_memAlgo(void)
     {
         if (NextPosition == NULL) //The memory list is still totally unoccupied
         {
-            PCB *ptr_to_waiting_processes = (PCB *)(WaitingPCBs->head->dataPtr);
+            PCB *ptr_to_waiting_processes = (PCB *)(ProcessToBeChecked->dataPtr);
             //Remove the process from the WaitingPCBs
             //dequeue(WaitingPCBs, (void *)&ptr_to_waiting_processes);
             //Get the Next empty (and only GAP memory segment)
@@ -1014,7 +1014,7 @@ void Next_Fit_memAlgo(void)
             kill(pid, SIGSTOP);
             ptr_to_waiting_processes->pid = pid;
             void *dummyPTR;
-            _delete(WaitingPCBs, get_before_node(WaitingPCBs, ptr_to_waiting_processes), ptr_to_waiting_processes, &(dummyPTR));
+            _delete(WaitingPCBs, get_before_node(WaitingPCBs,ProcessToBeChecked), ProcessToBeChecked, &(dummyPTR));
             //Insert it into the PCBs Queue
             if (theAlgorithm == SJF)
                 enqueue_sorted(PCBs, (void *)ptr_to_waiting_processes, CompareRunningTime);
@@ -1071,7 +1071,7 @@ void Next_Fit_memAlgo(void)
                 ptr_to_waiting_processes->pid = pid;
                 ProcessToBeChecked = ProcessToBeChecked->link;
                 void *dummyPTR;
-                _delete(WaitingPCBs, get_before_node(WaitingPCBs, ptr_to_waiting_processes), ptr_to_waiting_processes, &(dummyPTR));
+                _delete(WaitingPCBs, get_before_node(WaitingPCBs, ProcessToBeChecked), ProcessToBeChecked, &(dummyPTR));
                 //Insert it into the PCBs Queue
                 if (theAlgorithm == SJF)
                     enqueue_sorted(PCBs, (void *)ptr_to_waiting_processes, CompareRunningTime);
