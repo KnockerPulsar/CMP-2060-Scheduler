@@ -540,6 +540,8 @@ void Shortest_Job_First_Scheduling(void)
 
         output_finished(front_process_queue);
 
+        output_deallocate(front_process_queue->id);
+
         if (memAlgo != BSA)
             deallocateMemory(front_process_queue->id);
         else
@@ -630,10 +632,13 @@ void Shortest_Remaining_Time_Next_Scheduling(void)
 
             update_cpu_data(front_process_queue);
 
+            output_deallocate(front_process_queue->id);
+
             if (memAlgo != BSA)
                 deallocateMemory(front_process_queue->id);
             else
                 deallocateMemory_BSA(front_process_queue->id);
+
 
             // Delete the allocated data for this PCB
             free(front_process_queue);
@@ -695,6 +700,8 @@ void Round_Robin_Scheduling(void)
             //printf("process with id %d is now finishing at time %d\n", front_process_queue->id, getClk());
             output_finished(front_process_queue);
             update_cpu_data(front_process_queue);
+
+            output_deallocate(front_process_queue->id);
 
             if (memAlgo != BSA)
                 deallocateMemory(front_process_queue->id);
@@ -828,6 +835,8 @@ void PreemptiveHighestPriorityFirst()
             output_finished(currentRunning);
             update_cpu_data(currentRunning);
             dequeue(PCB_Scheduling_Queue, (void *)(&dequeuePtr));
+
+            output_deallocate(dequeuePtr->id);
 
             if (memAlgo != BSA)
                 deallocateMemory(dequeuePtr->id);
