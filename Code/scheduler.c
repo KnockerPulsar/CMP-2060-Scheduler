@@ -1,5 +1,6 @@
 #include "headers.h"
 #include "queue.h"
+#include "LinkedList.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -19,13 +20,21 @@ int *memAdr;
 // Feel free to use it if you need it in any other algorithm
 QUEUE *PCB_Scheduling_Queue;
 
-// This queue is used to transfer process data from the new process handler to the current Algorithm function
+// This queue contains all allocated processes
 QUEUE *PCBs;
+
+// Contains all processes that are waiting to be allocated
+QUEUE *WaitingPCBs;
 
 //Used to store the Algorithm number. If this number is equal to 2 then elements are enqueued sorted by Running time in PCBs
 // If this number is equal to 4 then elements are enqueued sorted by Remaining time in PCBs
 // Any other algorithm is sorted normally
 Scheduling_Algorithm_Type theAlgorithm;
+
+// enum which hole the type of emory algo we need
+MemoryAlgorithm theMemoryAlgorithm;
+// this Linekd List to be used for the first 3 memory algorithms 
+LIST * MemoryList;
 
 // If the PG is sending a new process to the scheduler, it signals it before sending
 // Then it sends the process data via a Message queue
@@ -48,16 +57,14 @@ FILE *logFile;
 FILE *perfFile;
 char *InputFileName;
 int QUANTUM;
-
-int *Waiting;
-int *Running;
-
-int Enough;
+int memAlgo;
 
 // Comparison functions
 int CompareRunningTime(void *, void *);
 int ComparePriority(void *, void *);
 int CompareRemainingTime(void *, void *);
+
+int dummy_compare(int* a,int *b);
 
 int main(int argc, char *argv[])
 {
@@ -66,6 +73,35 @@ int main(int argc, char *argv[])
     initClk();
     // if the scheduler receives this signal, it means that the PG is sending it a new process
     signal(SIGUSR1, new_process_handler);
+    //******************************MEMORY INIT*************************//
+    void (*MemAlgoToRun)(void);
+    switch (memAlgo)
+    {
+    case FF:
+        MemoryList=createList(dummy_compare);
+        memory_fragment* initMem;
+        initMem= (memory_fragment*)malloc(sizeof(memory_fragment));
+        initMem->theState=GAP;
+        initMem->start_position=0;
+        initMem->length=1024;
+        
+        //todo: function_pointer= FF algo
+        break;
+    case NF:
+
+        break;
+    case BF:
+
+        break;
+    case BSA:
+
+        break;
+
+    default:
+        break;
+    }
+
+    ///////////////////////////////////////////////////////////////////////
 
     // Initialize the queue
     PCBs = createQueue();
@@ -102,7 +138,7 @@ int main(int argc, char *argv[])
     total_run_time = 0;
     numOfProcs = atoi(argv[2]);
 
-    InputFileName = argv[3]; //Uncomment after changing the project structure --> Probably won't need it anyway
+    //InputFileName = argv[3]; //Uncomment after changing the project structure --> Probably won't need it anyway
     //Uncomment after changing the project structure --> Used to count the number of processes
     // FILE *ptrToFile;
     // numOfProcs = 0;
@@ -144,9 +180,15 @@ int main(int argc, char *argv[])
     // we should determine the algo from the args in process generator
     theAlgorithm = atoi(argv[1]);
     if (theAlgorithm == RR)
-        QUANTUM = atoi(argv[4]);
+    {
+        QUANTUM = atoi(argv[3]);
+        memAlgo = atoi(argv[4]);
+    }
     else
+    {
         QUANTUM = 0;
+        memAlgo = atoi(argv[3]);
+    }
 
     //printf("Quantum= %d\n", QUANTUM);
 
@@ -273,36 +315,39 @@ void new_process_handler(int signum)
         //printf("Process with id %d received at time %d\n", processGenBuffer.P.id, getClk());
 
         // Fork the new process, send it to the process file
-        int pid = fork();
-        if (pid == 0) // Child
-        {
-            execl("process", "process", (char *)NULL);
-        }
+        // int pid = fork();
+        // if (pid == 0) // Child
+        // {
+        //     execl("process", "process", (char *)NULL);
+        // }
 
         // Pause the process that we just forked
-        kill(pid, SIGSTOP);
+        //kill(pid, SIGSTOP);
 
         // Create a new PCB structure  & fill it will info
         // Needs to be dynamically created so that it persists after the handler ends
         PCB *tempPCB = malloc(sizeof(PCB));
         tempPCB->arrivaltime = processGenBuffer.P.arrivaltime;
         tempPCB->id = processGenBuffer.P.id;
-        tempPCB->pid = pid;
+        //tempPCB->pid = pid;
         tempPCB->runningtime = processGenBuffer.P.runningtime;
         tempPCB->remainingtime = processGenBuffer.P.runningtime;
-        tempPCB->priority = processGenBuffer.P.priority;
+        tempPCB->priority = processGenBuffer.P.priority; 
+        tempPCB->memsize = processGenBuffer.P.memsize;      
         //fflush(stdin);
         //printf("Remaining time %d\n", tempPCB->remainingtime);
+        enqueue(WaitingPCBs, (void *) tempPCB);
 
         // Add this process to the new processes queue
         // The selected Algo can then take this new process and add it
         // To its ready queue (could different for every Algorithm)
-        if (theAlgorithm == SJF)
-            enqueue_sorted(PCBs, (void *)tempPCB, CompareRunningTime);
-        else if (theAlgorithm == SRTN)
-            enqueue_sorted(PCBs, (void *)tempPCB, CompareRemainingTime);
-        else
-            enqueue(PCBs, (void *)tempPCB);
+
+        // if (theAlgorithm == SJF)
+        //     enqueue_sorted(PCBs, (void *)tempPCB, CompareRunningTime);
+        // else if (theAlgorithm == SRTN)
+        //     enqueue_sorted(PCBs, (void *)tempPCB, CompareRemainingTime);
+        // else
+        //     enqueue(PCBs, (void *)tempPCB);
     }
 
     // Reassign this function as SIGUSR1 handler
@@ -752,4 +797,12 @@ int ComparePriority(void *left, void *right)
         return 1;
     else
         return 0;
+}
+
+
+
+
+int dummy_compare(int* a,int *b)
+{
+    return 0;
 }

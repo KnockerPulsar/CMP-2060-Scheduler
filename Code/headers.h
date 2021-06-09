@@ -69,7 +69,8 @@ typedef struct processData
     int priority;
     int runningtime;  
     int id;
-    //int remainning_time
+    int memsize;
+    //int remaining_time
 } processData;
 
 // Message buffer for communication between Process Generator & the Scheduler
@@ -88,6 +89,7 @@ typedef struct PCB
     int priority;
     int runningtime;
     int remainingtime;
+    int memsize;
 }PCB;
 
 
@@ -103,6 +105,7 @@ typedef enum Scheduling_Algorithm_Type
     RR
 }Scheduling_Algorithm_Type;
 
+
 // Struct for communication between the scheduler & the process
 // Currently being used to send the remaining time
 typedef struct S_P_MB
@@ -110,3 +113,32 @@ typedef struct S_P_MB
     int remaining_time;
     long mtype;
 }S_P_MB;
+
+
+
+
+typedef enum mem_state
+{
+    GAP, // so its free fragmen
+    PROCESS  // so tis taken fragment
+}mem_state;
+
+typedef struct memory_fragment
+{
+    int start_position;
+    int length;
+    int id;
+    mem_state theState;
+
+}memory_fragment;
+
+typedef enum MemoryAlgorithm
+{
+    PLACEHOLDER1,
+    FF,
+    NF,
+    BF,
+    BSA
+}MemoryAlgorithm;
+
+

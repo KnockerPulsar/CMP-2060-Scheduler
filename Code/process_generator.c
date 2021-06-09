@@ -46,6 +46,7 @@ processData *ReadSimData(char *filePath);
 // Global variables
 int lines;
 char* Quantum;
+char* memAlgo;
 
 // IPC resources
 int procGenSchedMsqQID;
@@ -90,10 +91,6 @@ int main(int argc, char *argv[])
 
     // 2. Read the chosen scheduling algorithm and its parameters, if there are any from the argument list.
     /* ============================================================================================= */
-
-    for (int i = 0;i< argc;i++)
-        printf("%s\n", argv[i]);
-
         
     if (strcmp(argv[2], "-sch"))
     {
@@ -103,9 +100,33 @@ int main(int argc, char *argv[])
 
     char *schedulingAlg = argv[3];
 
+    printf("The memory size of each process =%ld\n",sizeof(PCB));
 
     if(atoi(schedulingAlg) == RR)
+    {
+        if (strcmp(argv[4], "-q"))
+        {
+            printf("ERROR: Incorrect argument formating, make sure to include -q\n");
+            raise(SIGINT);
+        }
         Quantum = argv[5];
+        if (strcmp(argv[6], "-mem"))
+        {
+            printf("ERROR: Incorrect argument formating, make sure to include -mem\n");
+            raise(SIGINT);
+        }
+        memAlgo = argv[7];
+    }
+    else
+    {
+        if (strcmp(argv[4], "-mem"))
+        {
+            printf("ERROR: Incorrect argument formating, make sure to include -mem\n");
+            raise(SIGINT);
+        }
+        memAlgo = argv[5];
+    }
+    
     //else
         //sprintf(Quantum, "%d", 0);
 
@@ -175,7 +196,12 @@ int main(int argc, char *argv[])
                 char * str = malloc( sizeof(char) * (c + 1) );
                 sprintf(str, "%d", lines);
                 printf("Scheduler child!\n");
-                execl("scheduler", "scheduler", schedulingAlg, str, pDataPath, Quantum,(char *) NULL);
+                if (atoi(schedulingAlg) == RR)
+                    execl("scheduler", "scheduler", schedulingAlg, str,
+                    Quantum, memAlgo,(char *) NULL);
+                else
+                    execl("scheduler", "scheduler", schedulingAlg, str, 
+                    memAlgo,(char *) NULL);
                 //execl("scheduler", "scheduler", schedulingAlg, str, (char *) NULL);
                 free(str);
                 break;
@@ -249,7 +275,7 @@ processData *ReadSimData(char *filePath)
         exit(-1);
     }
 
-    const int buffSize = 32; // For readability
+    const int buffSize = 64; // For readability
     lines = 0;
     int readChars;             // To store the number of lines and how many chars were read
     size_t lineLen = buffSize; // To tell getline() the size of our buffer.
@@ -291,6 +317,9 @@ processData *ReadSimData(char *filePath)
 
         splitPtr = strtok(NULL, "\t");
         pData[pIndex].priority = atoi(splitPtr);
+
+        splitPtr = strtok(NULL, "\t");
+        pData[pIndex].memsize = atoi(splitPtr);
 
         pIndex++;
     }
