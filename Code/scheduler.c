@@ -59,6 +59,7 @@ float waiting_time;
 float weighted_turnaround_time;
 FILE *logFile;
 FILE *perfFile;
+FILE *memFile;
 char *InputFileName;
 int QUANTUM;
 int memAlgo;
@@ -196,6 +197,9 @@ int main(int argc, char *argv[])
     logFile = fopen(LOG, "w");
     if (logFile == NULL)
         printf("Error opening log file\n");
+    memFile = fopen(MEM, "w");
+    if (memFile == NULL)
+        printf("Error in opening memory log file\n");
 
     printf("The number of Processes to schedule is %d\n", numOfProcs);
     // TODO: depending on the value of sigAlgo, make the required Datastructures & use them
@@ -323,6 +327,36 @@ void update_cpu_data(PCB *process)
     waiting_time += getClk() - process->arrivaltime - process->runningtime;
 }
 
+void output_allocate(PCB *process)
+{
+    fprintf(memFile, "At time %d allocated %d bytes for process %d from %d to %d\n",
+    getClk(), process->memsize, process->id,
+    ( (memory_fragment *) ( ( (NODE *) process->memoryNode )->dataPtr ) )->start_position ),
+    ( (memory_fragment *) ( ( (NODE *) process->memoryNode )->dataPtr ) )->start_position +
+    ( (memory_fragment *) ( ( (NODE *) process->memoryNode )->dataPtr ) )->length - 1 ;
+    fflush(stdin);
+    printf("At time %d allocated %d bytes for process %d from %d to %d\n",
+    getClk(), process->memsize, process->id,
+    ( (memory_fragment *) ( ( (NODE *) process->memoryNode )->dataPtr ) )->start_position ),
+    ( (memory_fragment *) ( ( (NODE *) process->memoryNode )->dataPtr ) )->start_position +
+    ( (memory_fragment *) ( ( (NODE *) process->memoryNode )->dataPtr ) )->length - 1 ;
+}
+
+void output_deallocate(PCB *process)
+{
+    fprintf(memFile, "At time %d freed %d bytes for process %d from %d to %d\n",
+    getClk(), process->memsize, process->id,
+    ( (memory_fragment *) ( ( (NODE *) process->memoryNode )->dataPtr ) )->start_position ),
+    ( (memory_fragment *) ( ( (NODE *) process->memoryNode )->dataPtr ) )->start_position +
+    ( (memory_fragment *) ( ( (NODE *) process->memoryNode )->dataPtr ) )->length - 1 ;
+    fflush(stdin);
+    printf("At time %d freed %d bytes for process %d from %d to %d\n",
+    getClk(), process->memsize, process->id,
+    ( (memory_fragment *) ( ( (NODE *) process->memoryNode )->dataPtr ) )->start_position ),
+    ( (memory_fragment *) ( ( (NODE *) process->memoryNode )->dataPtr ) )->start_position +
+    ( (memory_fragment *) ( ( (NODE *) process->memoryNode )->dataPtr ) )->length - 1 ;
+}
+
 void new_process_handler(int signum)
 {
     int PG_S_recVal = msgrcv(PG_S_MQid, &processGenBuffer, sizeof(processGenBuffer.P), processGenBuffer.mtype, !IPC_NOWAIT);
@@ -402,6 +436,10 @@ void First_Come_First_Serve_Scheduling(void)
         *memAdr = front_process_queue->remainingtime;
 
         output_started(front_process_queue);
+
+        // deallocate reserved space for process
+        deallocateMemory(front_process_queue->id);
+        // TODO: Add Output function for process deallocation
 
         kill(front_process_queue->pid, SIGCONT);
 
@@ -865,7 +903,7 @@ void First_Fit_memAlgo(void)
             bool flag1= (memory_to_cut->theState ==GAP);
             int free_size=memory_to_cut->length-memory_to_cut->start_position;
             bool flag2= (free_size ==process_to_allocate->memsize);
-            if(flag1==flag2)
+            if(flag1 && flag2)
             {
                 // take the needed part now ;
                 memory_fragment * memory_needed=(memory_fragment *)malloc(sizeof(memory_fragment));
