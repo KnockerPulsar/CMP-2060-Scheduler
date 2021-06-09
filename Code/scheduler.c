@@ -78,7 +78,7 @@ int main(int argc, char *argv[])
 {
     printf("Scheduler spawned!\n");
 
-    //initClk();
+    initClk();
     // if the scheduler receives this signal, it means that the PG is sending it a new process
     signal(SIGUSR1, new_process_handler);
 
@@ -107,58 +107,8 @@ int main(int argc, char *argv[])
         initMem->theState = GAP;
         initMem->start_position = 0;
         initMem->length = 1024;
-        //_insert(MemoryList, MemoryList->rear, (void *)initMem);
-        memory_fragment * m1 = (memory_fragment *)malloc(sizeof(memory_fragment));
-        memory_fragment * m2 = (memory_fragment *)malloc(sizeof(memory_fragment));
-        memory_fragment * m3 = (memory_fragment *)malloc(sizeof(memory_fragment));
-        memory_fragment * m4 = (memory_fragment *)malloc(sizeof(memory_fragment));
-        m1->start_position = 0;
-        m1->theState = PROCESS;
-        m1->id = 1;
-        m1->length = 100;
+        _insert(MemoryList, MemoryList->rear, (void *)initMem);
 
-        m2->start_position = 100;
-        m2->theState = GAP;
-        m2->id = 2;
-        m2->length = 100;
-
-        m3->start_position = 200;
-        m3->theState = PROCESS;
-        m3->id = 3;
-        m3->length = 100;
-
-        m4->start_position = 300;
-        m4->theState = PROCESS;
-        m4->id = 4;
-        m4->length = 100;
-        
-
-        
-        _insert(MemoryList, MemoryList->rear, (void *) m1);
-        _insert(MemoryList, MemoryList->rear, (void *) m2);
-        _insert(MemoryList, MemoryList->rear, (void *) m3);
-        _insert(MemoryList, MemoryList->rear, (void *) m4);
-
-        NODE * ptr = MemoryList->head;
-        while (ptr != NULL)
-        {
-            printf("Process with ID %d starts at pos %d and ends at pos %d and state %d\n",
-            ((memory_fragment *) ptr->dataPtr )->id, ((memory_fragment *) ptr->dataPtr )->start_position,
-            ((memory_fragment *) ptr->dataPtr )->start_position + ((memory_fragment *) ptr->dataPtr )->length - 1,
-            ((memory_fragment *) ptr->dataPtr )->theState);
-            ptr = ptr->link;
-        }
-
-        deallocateMemory(3);
-        ptr = MemoryList->head;
-        while (ptr != NULL)
-        {
-            printf("Process with ID %d starts at pos %d and ends at pos %d and state %d\n",
-            ((memory_fragment *) ptr->dataPtr )->id, ((memory_fragment *) ptr->dataPtr )->start_position,
-            ((memory_fragment *) ptr->dataPtr )->start_position + ((memory_fragment *) ptr->dataPtr )->length - 1,
-            ((memory_fragment *) ptr->dataPtr )->theState);
-            ptr = ptr->link;
-        }
 
         MemAlgoToRun = &First_Fit_memAlgo;
         //todo: function_pointer= FF algo
