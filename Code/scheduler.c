@@ -980,7 +980,7 @@ void Next_Fit_memAlgo(void)
     if (WaitingPCBs->count == 0)
         return;
 
-    NODE *ProcessToBeChecked = WaitingPCBs->front;
+    NODE *ProcessToBeChecked = WaitingPCBs->head;
     int CheckForFullLoop = MemoryList->count;
     while (ProcessToBeChecked != NULL)
     {
@@ -1011,6 +1011,7 @@ void Next_Fit_memAlgo(void)
             //Pause the process that we just forked
             kill(pid, SIGSTOP);
             ptr_to_waiting_processes->pid = pid;
+            void *dummyPTR;
             _delete(WaitingPCBs, get_before_node(WaitingPCBs, ptr_to_waiting_processes), ptr_to_waiting_processes, &(dummyPTR));
             //Insert it into the PCBs Queue
             if (theAlgorithm == SJF)
@@ -1052,7 +1053,7 @@ void Next_Fit_memAlgo(void)
                     else//In case they're equal
                     {
                         memory_to_cut->theState = PROCESS;
-                        memory_to_cut->id = ptr_to_waiting_processes->id
+                        memory_to_cut->id = ptr_to_waiting_processes->id;
                         memory_to_cut->length = ptr_to_waiting_processes->memsize;
                         ptr_to_waiting_processes->memoryNode = memory_to_cut;
                     }
@@ -1067,6 +1068,7 @@ void Next_Fit_memAlgo(void)
                 kill(pid, SIGSTOP);
                 ptr_to_waiting_processes->pid = pid;
                 ProcessToBeChecked = ProcessToBeChecked->link;
+                void *dummyPTR;
                 _delete(WaitingPCBs, get_before_node(WaitingPCBs, ptr_to_waiting_processes), ptr_to_waiting_processes, &(dummyPTR));
                 //Insert it into the PCBs Queue
                 if (theAlgorithm == SJF)
