@@ -1008,6 +1008,7 @@ void Next_Fit_memAlgo(void)
     {
         if (NextPosition == NULL) //The memory list is still totally unoccupied
         {
+            printf("Here1\n");
             PCB *ptr_to_waiting_processes = (PCB *)(ProcessToBeChecked->dataPtr);
             //Remove the process from the WaitingPCBs
             //dequeue(WaitingPCBs, (void *)&ptr_to_waiting_processes);
@@ -1024,6 +1025,7 @@ void Next_Fit_memAlgo(void)
             memory_needed->length = ptr_to_waiting_processes->memsize;
             ptr_to_waiting_processes->memoryNode = memory_needed;
             _insert(MemoryList, get_before_node(MemoryList, NextPosition), (void *)memory_needed);
+            printf("Here2\n");
             // Fork the new process, send it to the process file
             int pid = fork();
             if (pid == 0) // Child
@@ -1042,6 +1044,7 @@ void Next_Fit_memAlgo(void)
                 enqueue_sorted(PCBs, (void *)ptr_to_waiting_processes, CompareRemainingTime);
             else
                 enqueue(PCBs, (void *)ptr_to_waiting_processes);
+            output_allocate(ptr_to_waiting_processes);
             //To point to the head of the linked list after removing the first object
             ProcessToBeChecked = WaitingPCBs->head;
             continue;
@@ -1071,6 +1074,7 @@ void Next_Fit_memAlgo(void)
                         memory_needed->length = ptr_to_waiting_processes->memsize;
                         ptr_to_waiting_processes->memoryNode = memory_needed;
                         _insert(MemoryList, get_before_node(MemoryList, NextPosition), (void *)memory_needed);
+                        output_allocate(ptr_to_waiting_processes);
                     }
                     else//In case they're equal
                     {
@@ -1078,6 +1082,7 @@ void Next_Fit_memAlgo(void)
                         memory_to_cut->id = ptr_to_waiting_processes->id;
                         memory_to_cut->length = ptr_to_waiting_processes->memsize;
                         ptr_to_waiting_processes->memoryNode = memory_to_cut;
+                        output_allocate(ptr_to_waiting_processes);
                     }
                 }
                 // Fork the new process, send it to the process file

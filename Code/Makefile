@@ -14,4 +14,4 @@ clean:
 all: clean build
 
 run:
-	./process_generator.o testcase.txt -sch 2 -mem 2
+	./process_generator.o testcase.txt -sch 1 -mem 2
