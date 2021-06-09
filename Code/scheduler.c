@@ -327,32 +327,32 @@ void update_cpu_data(PCB *process)
 
 void output_allocate(PCB *process)
 {
-    fprintf(memFile, "At time %d allocated %d bytes for process %d from %d to %d\n",
-    getClk(), process->memsize, process->id,
-    ( (memory_fragment *) ( ( (NODE *) process->memoryNode )->dataPtr ) )->start_position ,
-    ( (memory_fragment *) ( ( (NODE *) process->memoryNode )->dataPtr ) )->start_position +
-    ( (memory_fragment *) ( ( (NODE *) process->memoryNode )->dataPtr ) )->length - 1);
+    // fprintf(memFile, "At time %d allocated %d bytes for process %d from %d to %d\n",
+    // getClk(), process->memsize, process->id,
+    // ((memory_fragment *) process->memoryNode)->start_position,
+    // ((memory_fragment *) process->memoryNode)->start_position +
+    // ((memory_fragment *) process->memoryNode)->length - 1);
     fflush(stdin);
     printf("At time %d allocated %d bytes for process %d from %d to %d\n",
     getClk(), process->memsize, process->id,
-    ( (memory_fragment *) ( ( (NODE *) process->memoryNode )->dataPtr ) )->start_position ,
-    ( (memory_fragment *) ( ( (NODE *) process->memoryNode )->dataPtr ) )->start_position +
-    ( (memory_fragment *) ( ( (NODE *) process->memoryNode )->dataPtr ) )->length - 1);
+    ((memory_fragment *) process->memoryNode)->start_position,
+    ((memory_fragment *) process->memoryNode)->start_position +
+    ((memory_fragment *) process->memoryNode)->length - 1);
 }
 
 void output_deallocate(PCB *process)
 {
-    fprintf(memFile, "At time %d freed %d bytes for process %d from %d to %d\n",
-    getClk(), process->memsize, process->id,
-    ( (memory_fragment *) ( ( (NODE *) process->memoryNode )->dataPtr ) )->start_position ,
-    ( (memory_fragment *) ( ( (NODE *) process->memoryNode )->dataPtr ) )->start_position +
-    ( (memory_fragment *) ( ( (NODE *) process->memoryNode )->dataPtr ) )->length - 1);
+    // fprintf(memFile, "At time %d freed %d bytes for process %d from %d to %d\n",
+    // getClk(), process->memsize, process->id,
+    // ((memory_fragment *) process->memoryNode)->start_position,
+    // ((memory_fragment *) process->memoryNode)->start_position +
+    // ((memory_fragment *) process->memoryNode)->length - 1);
     fflush(stdin);
-    printf("At time %d freed %d bytes for process %d from %d to %d\n",
+    printf("At time %d allocated %d bytes for process %d from %d to %d\n",
     getClk(), process->memsize, process->id,
-    ( (memory_fragment *) ( ( (NODE *) process->memoryNode )->dataPtr ) )->start_position ,
-    ( (memory_fragment *) ( ( (NODE *) process->memoryNode )->dataPtr ) )->start_position +
-    ( (memory_fragment *) ( ( (NODE *) process->memoryNode )->dataPtr ) )->length - 1);
+    ((memory_fragment *) process->memoryNode)->start_position,
+    ((memory_fragment *) process->memoryNode)->start_position +
+    ((memory_fragment *) process->memoryNode)->length - 1);
 }
 
 void new_process_handler(int signum)
@@ -390,6 +390,7 @@ void new_process_handler(int signum)
         //enqueue(WaitingPCBs, (void *) tempPCB);
         _insert(WaitingPCBs, WaitingPCBs->rear, (void *)tempPCB);
 
+        //printf("process with id %d needs memory %d\n", tempPCB->id, tempPCB->memsize);
         // Add this process to the new processes queue
         // The selected Algo can then take this new process and add it
         // To its ready queue (could different for every Algorithm)
@@ -909,7 +910,7 @@ void First_Fit_memAlgo(void)
             memory_fragment *memory_to_cut = (memory_fragment *)(iterator_memory->dataPtr);
             bool flag1= (memory_to_cut->theState ==GAP);
             int free_size=memory_to_cut->length-memory_to_cut->start_position;
-            bool flag2= (free_size ==process_to_allocate->memsize);
+            bool flag2= (free_size >=process_to_allocate->memsize);
             if(flag1 && flag2)
             {
                 // take the needed part now ;
@@ -921,23 +922,21 @@ void First_Fit_memAlgo(void)
 
                 int new_beginnig = memory_needed->start_position + memory_needed->length;
                 new_beginnig++;
+                printf("new beginning = %d\n", new_beginnig);
 
                 memory_to_cut->length -= memory_needed->length;
+                printf("memory_to_cut length = %d\n", memory_to_cut->length);
                 memory_to_cut->start_position = new_beginnig;
-                printf("pre insert\n");
                 _insert(MemoryList, get_before_node(MemoryList, iterator_memory), (void *)memory_needed);
-                printf("post insert\n");
                 //needed to make the PCB point to  its node in memory
                 process_to_allocate->memoryNode = (void *)memory_needed;
                 // needed to enqueue in pcb
-
                 // Fork the new process, send it to the process file
                 int pid = fork();
                 if (pid == 0) // Child
                 {
                     execl("process", "process", (char *)NULL);
                 }
-
                 //Pause the process that we just forked
                 kill(pid, SIGSTOP);
                 process_to_allocate->pid = pid;
