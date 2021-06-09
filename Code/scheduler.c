@@ -1012,7 +1012,7 @@ void Next_Fit_memAlgo(void)
             //Remove the process from the WaitingPCBs
             //dequeue(WaitingPCBs, (void *)&ptr_to_waiting_processes);
             //Get the Next empty (and only GAP memory segment)
-            memory_fragment *memory_to_cut = (memory_fragment *)(NextPosition->dataPtr);
+            memory_fragment *memory_to_cut = (memory_fragment *)(MemoryList->head->dataPtr);
             memory_to_cut->length = memory_to_cut->length - ptr_to_waiting_processes->memsize;
             memory_to_cut->start_position = memory_to_cut->start_position + ptr_to_waiting_processes->memsize;
             memory_to_cut->theState = GAP;
@@ -1103,6 +1103,11 @@ void Next_Fit_memAlgo(void)
                 break;
             }
             NextPosition = NextPosition->link;
+            if(NextPosition == NULL)
+                NextPosition = MemoryList->head;
+            CheckForFullLoop--;
+            if(CheckForFullLoop == 0)
+                break;
         }
         ProcessToBeChecked = ProcessToBeChecked->link;
     }
