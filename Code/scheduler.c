@@ -329,30 +329,30 @@ void output_allocate(PCB *process)
 {
     fprintf(memFile, "At time %d allocated %d bytes for process %d from %d to %d\n",
     getClk(), process->memsize, process->id,
-    ( (memory_fragment *) ( ( (NODE *) process->memoryNode )->dataPtr ) )->start_position ),
+    ( (memory_fragment *) ( ( (NODE *) process->memoryNode )->dataPtr ) )->start_position ,
     ( (memory_fragment *) ( ( (NODE *) process->memoryNode )->dataPtr ) )->start_position +
-    ( (memory_fragment *) ( ( (NODE *) process->memoryNode )->dataPtr ) )->length - 1 ;
+    ( (memory_fragment *) ( ( (NODE *) process->memoryNode )->dataPtr ) )->length - 1);
     fflush(stdin);
     printf("At time %d allocated %d bytes for process %d from %d to %d\n",
     getClk(), process->memsize, process->id,
-    ( (memory_fragment *) ( ( (NODE *) process->memoryNode )->dataPtr ) )->start_position ),
+    ( (memory_fragment *) ( ( (NODE *) process->memoryNode )->dataPtr ) )->start_position ,
     ( (memory_fragment *) ( ( (NODE *) process->memoryNode )->dataPtr ) )->start_position +
-    ( (memory_fragment *) ( ( (NODE *) process->memoryNode )->dataPtr ) )->length - 1 ;
+    ( (memory_fragment *) ( ( (NODE *) process->memoryNode )->dataPtr ) )->length - 1);
 }
 
 void output_deallocate(PCB *process)
 {
     fprintf(memFile, "At time %d freed %d bytes for process %d from %d to %d\n",
     getClk(), process->memsize, process->id,
-    ( (memory_fragment *) ( ( (NODE *) process->memoryNode )->dataPtr ) )->start_position ),
+    ( (memory_fragment *) ( ( (NODE *) process->memoryNode )->dataPtr ) )->start_position ,
     ( (memory_fragment *) ( ( (NODE *) process->memoryNode )->dataPtr ) )->start_position +
-    ( (memory_fragment *) ( ( (NODE *) process->memoryNode )->dataPtr ) )->length - 1 ;
+    ( (memory_fragment *) ( ( (NODE *) process->memoryNode )->dataPtr ) )->length - 1);
     fflush(stdin);
     printf("At time %d freed %d bytes for process %d from %d to %d\n",
     getClk(), process->memsize, process->id,
-    ( (memory_fragment *) ( ( (NODE *) process->memoryNode )->dataPtr ) )->start_position ),
+    ( (memory_fragment *) ( ( (NODE *) process->memoryNode )->dataPtr ) )->start_position ,
     ( (memory_fragment *) ( ( (NODE *) process->memoryNode )->dataPtr ) )->start_position +
-    ( (memory_fragment *) ( ( (NODE *) process->memoryNode )->dataPtr ) )->length - 1 ;
+    ( (memory_fragment *) ( ( (NODE *) process->memoryNode )->dataPtr ) )->length - 1);
 }
 
 void new_process_handler(int signum)
