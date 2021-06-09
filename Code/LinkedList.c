@@ -64,7 +64,7 @@ Return boolean, true if successful,
 false if memory overflow
 
 */
-static bool _insert(LIST *pList, NODE *pPre, void *dataInPtr)
+bool _insert(LIST *pList, NODE *pPre, void *dataInPtr)
 {
     //Local Definitions
     NODE *pNew;
@@ -226,7 +226,7 @@ pArgu pointer to key to be retrieved
 Post Data (pointer) passed back to caller
 Return boolean true success; false underflow
 */
-static bool retrieveNode(LIST *pList, void *pArgu, void **dataOutPtr)
+bool retrieveNode(LIST *pList, void *pArgu, void **dataOutPtr)
 {
     //Local Definitions
     bool found;
@@ -355,5 +355,3 @@ LIST *destroyList(LIST *pList)
     } // if
     return NULL;
 } // destroyList
-
-

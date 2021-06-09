@@ -10,7 +10,8 @@
         "functional": "c",
         "tuple": "c",
         "utility": "c",
-        "cmath": "c"
+        "cmath": "c",
+        "linkedlist.h": "c"
     },
     "cSpell.words": [
         "MEMEORY",
