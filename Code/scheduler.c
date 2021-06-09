@@ -540,7 +540,7 @@ void Shortest_Job_First_Scheduling(void)
 
         output_finished(front_process_queue);
 
-        output_deallocate(front_process_queue->id);
+        output_deallocate(front_process_queue);
 
         if (memAlgo != BSA)
             deallocateMemory(front_process_queue->id);
@@ -632,7 +632,7 @@ void Shortest_Remaining_Time_Next_Scheduling(void)
 
             update_cpu_data(front_process_queue);
 
-            output_deallocate(front_process_queue->id);
+            output_deallocate(front_process_queue);
 
             if (memAlgo != BSA)
                 deallocateMemory(front_process_queue->id);
@@ -701,7 +701,7 @@ void Round_Robin_Scheduling(void)
             output_finished(front_process_queue);
             update_cpu_data(front_process_queue);
 
-            output_deallocate(front_process_queue->id);
+            output_deallocate(front_process_queue);
 
             if (memAlgo != BSA)
                 deallocateMemory(front_process_queue->id);
@@ -836,7 +836,7 @@ void PreemptiveHighestPriorityFirst()
             update_cpu_data(currentRunning);
             dequeue(PCB_Scheduling_Queue, (void *)(&dequeuePtr));
 
-            output_deallocate(dequeuePtr->id);
+            output_deallocate(dequeuePtr);
 
             if (memAlgo != BSA)
                 deallocateMemory(dequeuePtr->id);
