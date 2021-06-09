@@ -13,6 +13,7 @@ int main(int agrc, char *argv[])
     //printf("Process with PID %d initialized at time %d\n", getpid(), getClk());
 
     int S_P_ShMemid = shmget(ftok(SCHED_PROC_QKEY, 'B'), sizeof(int) ,0666 |IPC_CREAT);
+    // printf("PROC SHM ID: %d", S_P_ShMemid);
 
     // Attach the shared memory to the scheduler
     int* memAdr = (int *) shmat(S_P_ShMemid, (void *) 0, 0);

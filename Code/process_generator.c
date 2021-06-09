@@ -10,7 +10,7 @@ The process generator should simulate a real operating systems as follows:
     •[DONE]It reads the input files containing the information about processes (check the
     input/output section below).
 
-    • It gets the chosen scheduling algorithm and its parameters, if any, as
+    •[DONE]It gets the chosen scheduling algorithm and its parameters, if any, as
     command line arguments. These arguments are specified after the name of the
     program in the system command line, and their values are passed to the
     program during execution.
@@ -20,7 +20,7 @@ The process generator should simulate a real operating systems as follows:
     •[DONE] It creates a data structure for processes and fills it with its parameters (e.g.
     arrival time, running time, etc.)
 
-    • It sends the information to the scheduler at the appropriate time (when a
+    •[DONE]It sends the information to the scheduler at the appropriate time (when a
     process arrives), so that the scheduler places it correctly in its turn among
     the existing processes. A process should not be sent to the scheduler until it
     arrives to the system.
@@ -257,7 +257,7 @@ void clearResources(int sig_num)
     printf("\nINTERRUPTED\n");
     
     msgctl(procGenSchedMsqQID, IPC_RMID, NULL);
-    shmctl(SchedProcShMemID, IPC_RMID, (struct shmid_ds *)0);
+    shmctl(SchedProcShMemID, IPC_RMID, NULL);
 
     killpg(getpgrp(), SIGINT);
     exit(0);

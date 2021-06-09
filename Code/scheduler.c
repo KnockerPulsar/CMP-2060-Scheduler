@@ -118,16 +118,17 @@ int main(int argc, char *argv[])
     // Getting the ID of the PG_S MQ
     key_t kid1 = ftok(PROCGEN_SCHED_QKEY, 'A');
     PG_S_MQid = msgget(kid1, 0666 | IPC_CREAT);
-    printf("PG_S_MQid = %d\n", PG_S_MQid);
+    // printf("PG_S_MQid = %d\n", PG_S_MQid);
 
     // Getting the ID of the S_P MQ
     key_t kid2 = ftok(SCHED_PROC_QKEY, 'B');
     S_P_ShMemid = shmget(kid2, sizeof(int), 0666 | IPC_CREAT);
+    // printf("SCHED SHM ID: %d", S_P_ShMemid);
 
     // Attach the shared memory to the scheduler
     memAdr = (int *)shmat(S_P_ShMemid, (void *)0, 0);
 
-    printf("S_P_MQid = %d\n", S_P_ShMemid);
+    // printf("S_P_MQid = %d\n", S_P_ShMemid);
 
     // printf("All the arguments received: ");
     // for (int i = 0; i < argc; i++)
@@ -200,7 +201,6 @@ int main(int argc, char *argv[])
 
     // This switch case will be used to make
     // The necessary initializations for each algorithm
-
     void (*AlgoToRun)(void);
     switch (theAlgorithm)
     {
@@ -679,7 +679,7 @@ void PreemptiveHighestPriorityFirst()
     {
         dequeue(PCBs, (void *)(&newProc));
 
-        printf("Process with ID: %d, remaining time: %d, priority: %d arrived\n", newProc->id, newProc->remainingtime, newProc->priority);
+        printf("Process with PID: %d, remaining time: %d, priority: %d arrived\n", newProc->pid, newProc->remainingtime, newProc->priority);
         currTime = getClk();
 
         // if (currTime != getClk())
@@ -691,7 +691,7 @@ void PreemptiveHighestPriorityFirst()
         // If first process
         if (emptyQueue(PCB_Scheduling_Queue))
         {
-            printf("%s", "The process is alone, inserting at the front of the queue\n");
+            // printf("%s", "The process is alone, inserting at the front of the queue\n");
             enqueue(PCB_Scheduling_Queue, (void *)newProc);
             currentRunning = newProc;
             *memAdr = currentRunning->remainingtime;
@@ -703,12 +703,12 @@ void PreemptiveHighestPriorityFirst()
         }
         else
         {
-            printf("%s", "There are other processes, inserting somewhere in the queue\n");
+            // printf("%s", "There are other processes, inserting somewhere in the queue\n");
             // If there's one, check if its priority is higher than the current priority
             if (ComparePriority(newProc, currentRunning) == 1)
             // If so, send SIGSTOP to the current process, place the new one in the queue, and send SIGSTRT to it if needed
             {
-                printf("%s", "Process has higher priority than the current running process, replacing\n");
+                // printf("%s", "Process has higher priority than the current running process, replacing\n");
                 kill(currentRunning->pid, SIGSTOP);
                 output_stopped(currentRunning);
                 currentRunning = newProc;
@@ -749,7 +749,7 @@ void PreemptiveHighestPriorityFirst()
 
             if (queueFront(PCB_Scheduling_Queue, (void *)(&dequeuePtr)))
             {
-                printf("%s", "There are other processes left, dequeuing one\n");
+                // printf("%s", "There are other processes left, dequeuing one\n");
                 currentRunning = dequeuePtr;
                 *memAdr = currentRunning->remainingtime;
                 if (currentRunning->remainingtime < currentRunning->runningtime)
@@ -766,7 +766,7 @@ void PreemptiveHighestPriorityFirst()
         QUEUE_NODE *ptr = PCB_Scheduling_Queue->front;
         while (ptr)
         {
-            printf("%d \t", ((PCB *)ptr->dataPtr)->pid);
+            printf("{ PID: %d, pri: %d }\t", ((PCB *)ptr->dataPtr)->pid, ((PCB *)ptr->dataPtr)->priority);
             ptr = ptr->next;
         }
         printf("%s", "\n");
@@ -794,13 +794,15 @@ int CompareRemainingTime(void *left, void *right)
     return 0;
 }
 
+// Lower priority number == higher priority
+// We need to return 1 left's priority < right's priority
 int ComparePriority(void *left, void *right)
 {
     PCB *leftObj = (PCB *)left, *rightObj = (PCB *)right;
     if (leftObj->priority > rightObj->priority)
-        return 1;
-    else if (leftObj->priority < rightObj->priority)
         return -1;
+    else if (leftObj->priority < rightObj->priority)
+        return 1;
     else
         return 0;
 }
