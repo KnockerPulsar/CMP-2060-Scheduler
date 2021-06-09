@@ -7,6 +7,7 @@
             "args": [
                 "-g",
                 "${file}",
+                "BuddyBinaryTree.c",
                 "-o",
                 "${fileDirname}/${fileBasenameNoExtension}"
             ],
