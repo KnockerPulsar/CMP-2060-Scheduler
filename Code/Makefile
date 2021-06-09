@@ -3,7 +3,8 @@ build:
 	gcc clk.c -o clk
 	gcc -c scheduler.c
 	gcc -c queue.c
-	gcc -o scheduler scheduler.o queue.o
+	gcc -c LinkedList.c
+	gcc -o scheduler scheduler.o queue.o LinkedList.o
 	gcc process.c -o process
 	gcc test_generator.c -o test_generator.out
 

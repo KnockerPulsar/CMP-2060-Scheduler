@@ -70,6 +70,10 @@ int CompareRemainingTime(void *, void *);
 
 int dummy_compare(void *a, void *b);
 
+// Deallocation functions
+void deallocateMemory(int process_id);
+void deallocateMemory_BSA(int process_id);
+
 int main(int argc, char *argv[])
 {
     printf("Scheduler spawned!\n");
@@ -477,6 +481,11 @@ void Shortest_Job_First_Scheduling(void)
 
         output_finished(front_process_queue);
 
+        if (memAlgo != BSA)
+            deallocateMemory(front_process_queue->id);
+        else
+            deallocateMemory_BSA(front_process_queue->id);
+
         free(front_process_queue);
 
         numOfProcs--;
@@ -562,6 +571,11 @@ void Shortest_Remaining_Time_Next_Scheduling(void)
 
             update_cpu_data(front_process_queue);
 
+            if (memAlgo != BSA)
+                deallocateMemory(front_process_queue->id);
+            else
+                deallocateMemory_BSA(front_process_queue->id);
+
             // Delete the allocated data for this PCB
             free(front_process_queue);
             numOfProcs--;
@@ -622,6 +636,12 @@ void Round_Robin_Scheduling(void)
             //printf("process with id %d is now finishing at time %d\n", front_process_queue->id, getClk());
             output_finished(front_process_queue);
             update_cpu_data(front_process_queue);
+
+            if (memAlgo != BSA)
+                deallocateMemory(front_process_queue->id);
+            else
+                deallocateMemory_BSA(front_process_queue->id);
+
             free(front_process_queue);
             numOfProcs--;
         }
@@ -749,6 +769,12 @@ void PreemptiveHighestPriorityFirst()
             output_finished(currentRunning);
             update_cpu_data(currentRunning);
             dequeue(PCB_Scheduling_Queue, (void *)(&dequeuePtr));
+
+            if (memAlgo != BSA)
+                deallocateMemory(dequeuePtr->id);
+            else
+                deallocateMemory_BSA(dequeuePtr->id);
+
             free(dequeuePtr);
             numOfProcs--;
 
@@ -847,9 +873,147 @@ void First_Fit_memAlgo(void)
 
 void deallocateMemory(int process_id) // only called for ff,nf,bf
 {
-    //itterate on the list untif find process_id
-}
+    // iterate on the list until we find the node with id that's equal to process_id
+    // Then there are three cases
+    // Case 1 - Both the previous node & the next node are filled
+    // --> Simply deallocate the place and free it as a gap
+    // Case 2 - One of the two nodes is free 
+    // --> Merge this node & that free node
+    // Case 3 - Both nodes are free
+    // Merge all three nodes into one
+    
+    // Edge cases
+    // at the head --> (only check next)
+    // at the read --> (only check prev)
+    NODE* ptr = MemoryList->head;
+    if (ptr == NULL)
+        {
+            printf("Memory list is emtpy - Failed to deallocate memory of process %d\n", process_id);
+            return;
+        }
+    
+    bool found = false;
+    NODE* prev = ptr; // ptr to prev node;
+    NODE* temp;
+    
+    while (ptr != NULL || found)
+    {
+        if ( ( (memory_fragment *) ptr->dataPtr )->id == process_id )
+        {
+            found = true;
+            ( (memory_fragment *) ptr->dataPtr )->id = -1;
+            // Edge case 1
+            if (ptr == MemoryList->head)
+            {
+                if ( ptr->link != NULL )
+                {
+                    temp = ptr->link;
+                    // I'm the head & the next node isn't null & is a gap
+                    // I need to merge both nodes
+                    if ( ( (memory_fragment *) ptr->link->dataPtr )->theState == GAP)
+                    {
+                        ( (memory_fragment *) ptr->dataPtr )->length += ( (memory_fragment *) temp->dataPtr )->length;
+                        ( (memory_fragment *) ptr->dataPtr )->theState = GAP; 
+                        ptr->link = temp->link;
+                        if (temp == MemoryList->rear)
+                            MemoryList->rear = ptr;
+                        free(temp->dataPtr);
+                        free (temp);
+                        MemoryList->count--;
+                    }
+                    // I'm the had & the next node isn't null & isn't a gap
+                    else
+                    {
+                        ( (memory_fragment *) ptr->dataPtr )->theState = GAP; 
+                    }
+                }
+                // I'm the head & the next node is null
+                else
+                {
+                     ( (memory_fragment *) ptr->dataPtr )->theState = GAP; 
+                }
+            }
+            // Edge case 2
+            else if (ptr == MemoryList->rear)
+            {
+                // I already addressed the case where I'm the head so I don't need to check if 
+                // Ptr == prev
+                // The prev node is also a gap
+                if (( (memory_fragment *) prev->dataPtr )->theState == GAP)
+                {
+                    ( (memory_fragment *) prev->dataPtr )->length += ( (memory_fragment *) ptr->dataPtr )->length;
+                    prev->link = ptr->link;
+                    free(ptr->dataPtr);
+                    free(ptr);
+                    MemoryList->rear = prev;
+                    MemoryList->count--;
+                }
+                // The prev node is not a gap
+                else
+                {
+                    ( (memory_fragment *) ptr->dataPtr )->theState = GAP;
+                }
+            }
+            // general case
+            else
+            {
+                temp = ptr->link;
+                // I have 3 cases here
+                if (( (memory_fragment *) prev->dataPtr )->theState == GAP &&
+                ( (memory_fragment *) temp->dataPtr )->theState == GAP)
+                {
+                    ( (memory_fragment *) prev->dataPtr )->length += ( (memory_fragment *) ptr->dataPtr )->length +
+                    ( (memory_fragment *) temp->dataPtr )->length;
+                    prev->link = temp->link;
+                    if (MemoryList->rear == temp)
+                        MemoryList->rear = prev;
+                    free(temp->dataPtr);
+                    free(ptr->dataPtr);
+                    free(temp);
+                    free(ptr);
+                    MemoryList->count -= 2;
+                }
+                else if (( (memory_fragment *) prev->dataPtr )->theState == GAP &&
+                ( (memory_fragment *) temp->dataPtr )->theState != GAP)
+                {
+                    ( (memory_fragment *) prev->dataPtr )->length += ( (memory_fragment *) ptr->dataPtr )->length;
+                    prev->link = ptr->link;
+                    free(ptr->dataPtr);
+                    free(ptr);
+                    MemoryList->count--;
+                }
+                else if (( (memory_fragment *) prev->dataPtr )->theState != GAP &&
+                ( (memory_fragment *) temp->dataPtr )->theState == GAP)
+                {
+                    
+                    ( (memory_fragment *) ptr->dataPtr )->length += ( (memory_fragment *) temp->dataPtr )->length;
+                    ( (memory_fragment *) ptr->dataPtr )->theState = GAP; 
+                    ptr->link = temp->link;
+                    if (temp == MemoryList->rear)
+                        MemoryList->rear = ptr;
+                    free(temp->dataPtr);
+                    free (temp);
+                    MemoryList->count--;
+                }
+                else
+                {
+                    ( (memory_fragment *) ptr->dataPtr )->theState = GAP;
+                }
+            }
+        }
+        else
+        {
+            prev = ptr;
+            ptr = ptr->link;
+        }
+    }
+    if (!found)
+    {
+        printf("Process with id %d not found in memory list\n", process_id);
+        return;
+    }
 
+}
 void deallocateMemory_BSA(int process_id) //ony for BSA
 {
 }
