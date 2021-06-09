@@ -74,15 +74,16 @@ bool enqueue_sorted(QUEUE *queue, void *itemPtr, int comp_func(void *, void *))
         return false;
 
     newPtr->dataPtr = itemPtr;
-    // newPtr->next = NULL;
+
     //printf("New = %d\n", *(int *)newPtr->dataPtr);
     if (queue->count == 0)
         // Inserting into null queue
         queue->front = newPtr;
+
     // Just one element
     else if (queue->count == 1)
     {
-        if (comp_func(queue->front->dataPtr, newPtr->dataPtr) == -1)
+        if (comp_func(newPtr->dataPtr, queue->front->dataPtr) == 1)
         {
             newPtr->next = queue->front;
             queue->front = newPtr;
@@ -98,8 +99,9 @@ bool enqueue_sorted(QUEUE *queue, void *itemPtr, int comp_func(void *, void *))
     {
         QUEUE_NODE *prevCheckElement = NULL;
         QUEUE_NODE *currCheckElement = queue->front;
+        int i;
         // Loop until you find the first smallest element
-        for (int i = 0; i < queue->count; i++)
+        for (i = 0; i < queue->count; i++)
         {
             // printf("Current Queue = ");
             // QUEUE_NODE *ptr = queue->front;
@@ -124,27 +126,21 @@ bool enqueue_sorted(QUEUE *queue, void *itemPtr, int comp_func(void *, void *))
             //     printf(" Current = NULL");
             // printf("\n");
             // printf("The comparsion = %d\n", comp_func(newPtr->dataPtr, currCheckElement->dataPtr));
+
             if (comp_func(newPtr->dataPtr, currCheckElement->dataPtr) == 1)
             {
-                // For a max priority queue
+                // For a max priority queue:
 
-                // If we have a higher value than the front, take its place
+                // If the current element is less than the element we want to insert
+                // Then we should insert the new element between the previous element and the current element
+                // So, prev->next = newItem, newItem->next = current
+
+                // If we're larger than the first element, push it back and take its place
                 if (prevCheckElement == NULL)
                 {
                     newPtr->next = queue->front;
                     queue->front = newPtr;
                 }
-                // If no value in the queue is lesser, that means that we're the min
-                // Insert at the end
-                else if (currCheckElement == NULL)
-                {
-                    currCheckElement->next = newPtr;
-                    queue->rear = newPtr;
-                    newPtr->next = NULL;
-                }
-                // If the current element is less than the element we want to insert
-                // Then we should insert the new element between the previous element and the current element
-                // So, prev->next = newItem, newItem->next = current
                 else
                 {
                     prevCheckElement->next = newPtr;
@@ -152,21 +148,14 @@ bool enqueue_sorted(QUEUE *queue, void *itemPtr, int comp_func(void *, void *))
                 }
                 break;
             }
-            // If no value in the queue is lesser, that means that we're the min
-            // Insert at the end
-            else if (comp_func(newPtr->dataPtr, currCheckElement->dataPtr) == -1)
-            {
-                if (currCheckElement->next == NULL)
-                {
-                    currCheckElement->next = newPtr;
-                    queue->rear = newPtr;
-                    newPtr->next = NULL;
-                    break;
-                }
-            }
+
             prevCheckElement = currCheckElement;
             currCheckElement = currCheckElement->next;
         }
+
+        // If we can't find a place for this new element in the middle or the front, it should be put in the rear
+        if (i == queue->count)
+            prevCheckElement->next = newPtr;
     }
 
     (queue->count)++;
