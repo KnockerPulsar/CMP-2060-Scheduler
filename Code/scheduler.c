@@ -964,6 +964,8 @@ void First_Fit_memAlgo(void)
     // algorithm to to allocate and then
 }
 
+
+
 void Next_Fit_memAlgo(void)
 {
     // Loop Starting the next available fit.
