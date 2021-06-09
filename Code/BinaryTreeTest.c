@@ -10,22 +10,21 @@ int main(int argc, char const *argv[])
     {
     BuddySystemData rootData = {1024, 0};
     BinaryTreeNode *rootNode = CreateBinaryTree((void *)&rootData);
-    Split(rootNode);
-    Split(rootNode->leftChild);
-    Split(rootNode->rightChild);
-    Split(rootNode->leftChild->leftChild);
-    Split(rootNode->leftChild->rightChild);
-    Split(rootNode->rightChild->leftChild);
-    Split(rootNode->rightChild->rightChild);
+    // Split(rootNode);
+    // Split(rootNode->leftChild);
+    // Split(rootNode->rightChild);
+    // Split(rootNode->leftChild->leftChild);
+    // Split(rootNode->leftChild->rightChild);
+    // Split(rootNode->rightChild->leftChild);
+    // Split(rootNode->rightChild->rightChild);
 
     BinaryTreeNode* fitting = NULL;
-    int wantedSize = 16;
+    int wantedSize = 32;
     FindSmallestFittingNode(rootNode, &wantedSize, &fitting);
 
     BinaryTreeNode* smallestFitting=NULL;
     SplitToSmallestSize(fitting, &wantedSize,&smallestFitting);
-
-
+    if(smallestFitting) ((BuddySystemData*)(smallestFitting))->actualAllocated+=wantedSize;
 
     PreOrderTraversal(rootNode, PrintBTNode);
 

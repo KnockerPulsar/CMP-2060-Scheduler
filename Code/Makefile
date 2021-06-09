@@ -4,7 +4,8 @@ build:
 	gcc -c scheduler.c
 	gcc -c queue.c
 	gcc -c LinkedList.c
-	gcc -o scheduler scheduler.o queue.o LinkedList.o
+	gcc -c BuddyBinaryTree.c
+	gcc -o scheduler scheduler.o queue.o LinkedList.o BuddyBinaryTree.o
 	gcc process.c -o process
 	gcc test_generator.c -o test_generator.out
 

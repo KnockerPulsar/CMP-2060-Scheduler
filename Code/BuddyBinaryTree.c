@@ -53,17 +53,23 @@ void Merge(BinaryTreeNode *leftChild, BinaryTreeNode *rightChild)
 
 void FindSmallestFittingNode(BinaryTreeNode *root, int *size, BinaryTreeNode **returnNode)
 {
-    if (!root || ((BuddySystemData *)(root->dataPtr))->actualAllocated != 0)
+    if (!root ||
+        ((BuddySystemData *)(root->dataPtr))->actualAllocated == ((BuddySystemData *)(root->dataPtr))->blockSize)
         return;
 
-    // If the return node hasn't been set or the current node fits and is smaller
+    // If the return node hasn't been set or the current node fits and is smaller and is unallcoated
     // Set the return node as the current node
-    if (
-        !(*returnNode) ||
-        (((BuddySystemData *)root->dataPtr)->blockSize >= *size &&
-         ((BuddySystemData *)root->dataPtr)->blockSize < ((BuddySystemData *)((*returnNode)->dataPtr))->blockSize))
+
+    if (!(*returnNode) && ((BuddySystemData *)root->dataPtr)->blockSize >= *size)
         *returnNode = root;
 
+    if (*returnNode &&
+        (((BuddySystemData *)root->dataPtr)->blockSize < ((BuddySystemData *)((*returnNode)->dataPtr))->blockSize) &&
+        ((BuddySystemData *)(root->dataPtr))->actualAllocated == 0)
+        *returnNode = root;
+
+    // ((BuddySystemData *)root->dataPtr)->blockSize
+    // ((BuddySystemData *)((*returnNode)->dataPtr))->blockSize
     if (root->leftChild)
         FindSmallestFittingNode(root->leftChild, size, returnNode);
     if (root->rightChild)
@@ -72,19 +78,21 @@ void FindSmallestFittingNode(BinaryTreeNode *root, int *size, BinaryTreeNode **r
 
 void SplitToSmallestSize(BinaryTreeNode *root, int *reqMem, BinaryTreeNode **smallest)
 {
-    if (!root || ((BuddySystemData *)(root->dataPtr))->actualAllocated != 0)
+    if (!root ||
+        ((BuddySystemData *)(root->dataPtr))->actualAllocated == ((BuddySystemData *)(root->dataPtr))->blockSize ||
+        *smallest && ((BuddySystemData *)(*smallest)->dataPtr)->blockSize == *reqMem
+    )
         return;
-    
-    if(*smallest == NULL ||
-        ((BuddySystemData *)(root->dataPtr))->blockSize < ((BuddySystemData *)((*smallest)->dataPtr))->blockSize
-     ) *smallest = root;
+
+    if (*smallest == NULL ||
+        ((BuddySystemData *)(root->dataPtr))->blockSize < ((BuddySystemData *)((*smallest)->dataPtr))->blockSize &&
+            ((BuddySystemData *)(root->dataPtr))->actualAllocated == 0)
+        *smallest = root;
 
     if (*reqMem <= ((BuddySystemData *)(root->dataPtr))->blockSize / 2 &&
         !root->leftChild && !root->rightChild)
     {
         Split(root);
-
-        *smallest=root;
 
         SplitToSmallestSize(root->leftChild, reqMem, smallest);
         SplitToSmallestSize(root->rightChild, reqMem, smallest);

@@ -77,7 +77,7 @@ int CompareRemainingTime(void *, void *);
 int dummy_compare(void *a, void *b);
 
 // Allocation
-void *allocateMemory_BSA();
+void allocateMemory_BSA();
 
 // Deallocation functions
 void deallocateMemory(int process_id);
@@ -1082,7 +1082,7 @@ void Next_Fit_memAlgo(void)
                         _insert(MemoryList, get_before_node(MemoryList, NextPosition), (void *)memory_needed);
                         output_allocate(ptr_to_waiting_processes);
                     }
-                    else//In case they're equal
+                    else //In case they're equal
                     {
                         memory_to_cut->theState = PROCESS;
                         memory_to_cut->id = ptr_to_waiting_processes->id;
@@ -1110,7 +1110,7 @@ void Next_Fit_memAlgo(void)
                     enqueue_sorted(PCBs, (void *)ptr_to_waiting_processes, CompareRemainingTime);
                 else
                     enqueue(PCBs, (void *)ptr_to_waiting_processes);
-                
+
                 break;
             }
             NextPosition = NextPosition->link;
@@ -1275,17 +1275,37 @@ void deallocateMemory(int process_id) // only called for ff,nf,bf
 // After getting the current smallest fragment, it further splits it until it reaches a fragment not large enough to be split.
 // It then updates how much actual memory is used in that node
 // Note: don't update parents to allow other relative nodes (sibling or uncle) to be able to be allocated
-void *allocateMemory_BSA()
+void allocateMemory_BSA()
 {
     NODE *iterator_processes = WaitingPCBs->head;
-    int requiredMem = ((PCB *)iterator_processes->dataPtr)->memsize;
 
-    BinaryTreeNode *fittingMemoryFrag = NULL;
-    //FindSmallestFittingNode(memRoot, &requiredMem, &fittingMemoryFrag);
+    while (iterator_processes)
+    {
+        int requiredMem = ((PCB *)iterator_processes->dataPtr)->memsize;
+        BinaryTreeNode *fittingMemoryFrag = NULL;
+        FindSmallestFittingNode(memRoot, &requiredMem, &fittingMemoryFrag);
 
-    ((BuddySystemData *)(fittingMemoryFrag->dataPtr))->actualAllocated = requiredMem;
+        // If there's a memory node that fits
+        // Update the no
+        if (fittingMemoryFrag != NULL)
+        {
+            ((BuddySystemData *)(fittingMemoryFrag->dataPtr))->actualAllocated += requiredMem;
 
-    return (void *)fittingMemoryFrag;
+            if (fittingMemoryFrag->parent)
+                ((BuddySystemData *)(fittingMemoryFrag->dataPtr))->actualAllocated += requiredMem;
+
+            ((PCB *)iterator_processes->dataPtr)->memoryNode = fittingMemoryFrag;
+
+            void *dummyPtr;
+            _delete(WaitingPCBs, get_before_node(WaitingPCBs, iterator_processes), iterator_processes, &dummyPtr);
+            _insert(MemoryList, get_before_node(MemoryList, iterator_processes), iterator_processes);
+            break;
+        }
+        else
+        {
+            iterator_processes = iterator_processes->link;
+        }
+    }
 }
 
 void deallocateMemory_BSA(int process_id) //ony for BSA
@@ -1295,4 +1315,49 @@ void deallocateMemory_BSA(int process_id) //ony for BSA
     // Set the node's acutalAllocated to 0
     // Check the other sibling, if its acutalAllocated is also 0, merge
     // Free the remaining resources (PCB and pointers)
+
+    NODE *procInMem = MemoryList->head;
+    while (procInMem)
+    {
+        PCB *procToDelete = (PCB *)procInMem->dataPtr;
+
+        // Found the process to deallocate
+        if (procToDelete->id == process_id)
+        {
+            BinaryTreeNode *memNode = (BinaryTreeNode *)procToDelete->memoryNode;
+            // If not root
+            if (memNode->parent)
+            {
+                // Parent has no memory allocated, this means both children are deallocated
+                // Delete them both
+                int parentAlloc = ((BuddySystemData *)memNode->parent->dataPtr)->actualAllocated;
+                if (parentAlloc == 0)
+                {
+                    Merge(memNode->parent->leftChild, memNode->parent->rightChild);
+                }
+                // If the other sibling is still allocated, just unallocate your memory
+                else
+                {
+                    ((BuddySystemData *)memNode->parent->dataPtr)->actualAllocated -= ((BuddySystemData *)memNode)->actualAllocated;
+                    ((BuddySystemData *)memNode)->actualAllocated = 0;
+                }
+            }
+            // If root, just unallocate your memory
+            // No need to update your parent since there isn't one
+            else
+            {
+                ((BuddySystemData *)memNode)->actualAllocated = 0;
+            }
+
+            // Delete the process data
+            void *dummyPtr;
+            _delete(MemoryList, get_before_node(MemoryList, procToDelete), procToDelete, &dummyPtr);
+
+            break;
+        }
+        else
+        {
+            procInMem = procInMem->link;
+        }
+    }
 }
