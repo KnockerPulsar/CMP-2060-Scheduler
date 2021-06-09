@@ -55,6 +55,7 @@ void Round_Robin_Scheduling(void);
 
 // Memory Algorithms
 void First_Fit_memAlgo(void);
+void Next_Fit_memAlgo(void);
 
 // Variables used for output files
 float CPU_util;
@@ -121,7 +122,13 @@ int main(int argc, char *argv[])
         //todo: function_pointer= FF algo
         break;
     case NF:
-
+        MemoryList = createList(&dummy_compare);
+        initMem = (memory_fragment *)malloc(sizeof(memory_fragment));
+        initMem->theState = GAP;
+        initMem->start_position = 0;
+        initMem->length = 1024;
+        _insert(MemoryList, MemoryList->rear, (void *)initMem);
+        MemAlgoToRun = &Next_Fit_memAlgo;
         break;
     case BF:
 
@@ -1245,7 +1252,7 @@ void *allocateMemory_BSA()
     int requiredMem = ((PCB *)iterator_processes->dataPtr)->memsize;
 
     BinaryTreeNode *fittingMemoryFrag = NULL;
-    FindSmallestFittingNode(memRoot, &requiredMem, &fittingMemoryFrag);
+    //FindSmallestFittingNode(memRoot, &requiredMem, &fittingMemoryFrag);
 
     ((BuddySystemData *)(fittingMemoryFrag->dataPtr))->actualAllocated = requiredMem;
 
