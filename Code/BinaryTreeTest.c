@@ -18,6 +18,13 @@ int main(int argc, char const *argv[])
     Split(rootNode->rightChild->leftChild);
     Split(rootNode->rightChild->rightChild);
 
+    BinaryTreeNode* fitting = NULL;
+    int wantedSize = 16;
+    FindSmallestFittingNode(rootNode, &wantedSize, &fitting);
+
+    BinaryTreeNode* smallestFitting=NULL;
+    SplitToSmallestSize(fitting, &wantedSize,&smallestFitting);
+
 
 
     PreOrderTraversal(rootNode, PrintBTNode);

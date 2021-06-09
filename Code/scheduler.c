@@ -1,6 +1,7 @@
 #include "headers.h"
 #include "queue.h"
 #include "LinkedList.h"
+#include "BuddyBinaryTree.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -38,6 +39,8 @@ Scheduling_Algorithm_Type theAlgorithm;
 MemoryAlgorithm theMemoryAlgorithm;
 // this Linekd List to be used for the first 3 memory algorithms
 LIST *MemoryList;
+// Binary Tree Root: Used to access the buddy system memory tree
+BinaryTreeNode *memRoot;
 
 // If the PG is sending a new process to the scheduler, it signals it before sending
 // Then it sends the process data via a Message queue
@@ -51,7 +54,6 @@ void Shortest_Remaining_Time_Next_Scheduling(void);
 void Round_Robin_Scheduling(void);
 
 // Memory Algorithms
-
 void First_Fit_memAlgo(void);
 
 // Variables used for output files
@@ -71,8 +73,10 @@ int memAlgo;
 int CompareRunningTime(void *, void *);
 int ComparePriority(void *, void *);
 int CompareRemainingTime(void *, void *);
-
 int dummy_compare(void *a, void *b);
+
+// Allocation
+void *allocateMemory_BSA();
 
 // Deallocation functions
 void deallocateMemory(int process_id);
@@ -968,6 +972,8 @@ void First_Fit_memAlgo(void)
     // algorithm to to allocate and then
 }
 
+
+
 void Next_Fit_memAlgo(void)
 {
     // Loop Starting the next available fit.
@@ -1231,6 +1237,30 @@ void deallocateMemory(int process_id) // only called for ff,nf,bf
         return;
     }
 }
+
+// Traverses down the memory binary tree searching for an approriate sized memory fragments
+// Favours left children.
+// After getting the current smallest fragment, it further splits it until it reaches a fragment not large enough to be split.
+// It then updates how much actual memory is used in that node
+// Note: don't update parents to allow other relative nodes (sibling or uncle) to be able to be allocated
+void *allocateMemory_BSA()
+{
+    NODE *iterator_processes = WaitingPCBs->head;
+    int requiredMem = ((PCB *)iterator_processes->dataPtr)->memsize;
+
+    BinaryTreeNode *fittingMemoryFrag = NULL;
+    FindSmallestFittingNode(memRoot, &requiredMem, &fittingMemoryFrag);
+
+    ((BuddySystemData *)(fittingMemoryFrag->dataPtr))->actualAllocated = requiredMem;
+
+    return (void *)fittingMemoryFrag;
+}
+
 void deallocateMemory_BSA(int process_id) //ony for BSA
 {
+    NODE *ptr = MemoryList->head;
+    // Access the PCB, get a pointer to the binary tree node
+    // Set the node's acutalAllocated to 0
+    // Check the other sibling, if its acutalAllocated is also 0, merge
+    // Free the remaining resources (PCB and pointers)
 }
