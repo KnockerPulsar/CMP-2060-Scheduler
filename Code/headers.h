@@ -120,3 +120,30 @@ typedef struct S_P_MB
     int remaining_time;
     long mtype;
 }S_P_MB;
+
+
+
+
+typedef enum mem_state
+{
+    GAP, // so its free fragmen
+    PROCESS  // so tis taken fragment
+}mem_state;
+
+typedef struct memory_fragment
+{
+    int start_position;
+    int length;
+    mem_state theState;
+
+}memory_fragment;
+
+typedef enum MemoryAlgorithm
+{
+    FF,
+    NF,
+    BF,
+    BSA
+}MemoryAlgorithm;
+
+

@@ -3,21 +3,6 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-typedef enum mem_state
-{
-    GAP,
-    PROCESS
-}mem_state;
-
-typedef struct memory_fragment
-{
-    int start_position;
-    int length;
-    mem_state theState;
-
-}memory_fragment;
-
-
 
 //*This Linked List is from Data Structures: A PseudocodeApproach with C,Second Edition*//
 //* The refrence we used in the first year in college*//
