@@ -33,8 +33,8 @@ Scheduling_Algorithm_Type theAlgorithm;
 
 // enum which hole the type of emory algo we need
 MemoryAlgorithm theMemoryAlgorithm;
-// this Linekd List to be used for the first 3 memory algorithms 
-LIST * MemoryList;
+// this Linekd List to be used for the first 3 memory algorithms
+LIST *MemoryList;
 
 // If the PG is sending a new process to the scheduler, it signals it before sending
 // Then it sends the process data via a Message queue
@@ -47,12 +47,9 @@ void PreemptiveHighestPriorityFirst(void);
 void Shortest_Remaining_Time_Next_Scheduling(void);
 void Round_Robin_Scheduling(void);
 
-
-// Memory Algorithms 
+// Memory Algorithms
 
 void First_Fit_memAlgo(void);
-
-
 
 // Variables used for output files
 float CPU_util;
@@ -71,7 +68,7 @@ int CompareRunningTime(void *, void *);
 int ComparePriority(void *, void *);
 int CompareRemainingTime(void *, void *);
 
-int dummy_compare(void* a,void *b);
+int dummy_compare(void *a, void *b);
 
 // Deallocation functions
 void deallocateMemory(int process_id);
@@ -89,14 +86,14 @@ int main(int argc, char *argv[])
     switch (memAlgo)
     {
     case FF:
-        MemoryList=createList(&dummy_compare);
-        memory_fragment* initMem;
-        initMem= (memory_fragment*)malloc(sizeof(memory_fragment));
-        initMem->theState=GAP;
-        initMem->start_position=0;
-        initMem->length=1024;
-        // TODO: add initMem to MemoryList
-        MemAlgoToRun=&First_Fit_memAlgo;
+        MemoryList = createList(&dummy_compare);
+        memory_fragment *initMem;
+        initMem = (memory_fragment *)malloc(sizeof(memory_fragment));
+        initMem->theState = GAP;
+        initMem->start_position = 0;
+        initMem->length = 1024;
+        _insert(MemoryList, MemoryList->rear, (void *)initMem);
+        MemAlgoToRun = &First_Fit_memAlgo;
         //todo: function_pointer= FF algo
         break;
     case NF:
@@ -116,7 +113,7 @@ int main(int argc, char *argv[])
     ///////////////////////////////////////////////////////////////////////
     //itnialise the linked list of coming unAllocated processes
 
-    WaitingPCBs=createList(&dummy_compare);
+    WaitingPCBs = createList(&dummy_compare);
 
     // Initialize the queue
     PCBs = createQueue();
@@ -348,12 +345,12 @@ void new_process_handler(int signum)
         //tempPCB->pid = pid;
         tempPCB->runningtime = processGenBuffer.P.runningtime;
         tempPCB->remainingtime = processGenBuffer.P.runningtime;
-        tempPCB->priority = processGenBuffer.P.priority; 
-        tempPCB->memsize = processGenBuffer.P.memsize;      
+        tempPCB->priority = processGenBuffer.P.priority;
+        tempPCB->memsize = processGenBuffer.P.memsize;
         //fflush(stdin);
         //printf("Remaining time %d\n", tempPCB->remainingtime);
         //enqueue(WaitingPCBs, (void *) tempPCB);
-        _insert(WaitingPCBs,WaitingPCBs->rear,(void*)tempPCB); 
+        _insert(WaitingPCBs, WaitingPCBs->rear, (void *)tempPCB);
 
         // Add this process to the new processes queue
         // The selected Algo can then take this new process and add it
@@ -841,10 +838,7 @@ int ComparePriority(void *left, void *right)
         return 0;
 }
 
-
-
-
-int dummy_compare(void* a,void *b)
+int dummy_compare(void *a, void *b)
 {
     return 0;
 }
@@ -853,18 +847,24 @@ int dummy_compare(void* a,void *b)
 
 void First_Fit_memAlgo(void)
 {
-    LIST *iterator=WaitingPCBs->head;
-    while (iterator)
+    NODE *iterator_processes = WaitingPCBs->head;
+    NODE *iterator_memory = MemoryList->head;
+    while (iterator_processes)
     {
         //logic for first fit
+       // PCB * temp_process=
+        while (iterator_memory)
+        {
+            memory_fragment *temp_memory = (memory_fragment *)(iterator_memory->dataPtr);
+        
+        }
     }
-    
+
     // itterate on waitnngPCB and then fill PCB
     // algorithm to to allocate and then
 }
 
-
-void  deallocateMemory(int process_id) // only called for ff,nf,bf 
+void deallocateMemory(int process_id) // only called for ff,nf,bf
 {
     // iterate on the list until we find the node with id that's equal to process_id
     // Then there are three cases
@@ -1009,7 +1009,4 @@ void  deallocateMemory(int process_id) // only called for ff,nf,bf
 }
 void deallocateMemory_BSA(int process_id) //ony for BSA
 {
-
 }
-
-
