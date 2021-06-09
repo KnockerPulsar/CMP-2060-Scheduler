@@ -1,10 +1,10 @@
 #include "headers.h"
 #include "queue.h"
+#include "LinkedList.h"
 #include <stdlib.h>
 #include <string.h>
 
 //#define QUANTUM 3
-
 
 // TODO: in PG, clear all IPC recources
 
@@ -27,6 +27,11 @@ QUEUE *PCBs;
 // If this number is equal to 4 then elements are enqueued sorted by Remaining time in PCBs
 // Any other algorithm is sorted normally
 Scheduling_Algorithm_Type theAlgorithm;
+
+// enum which hole the type of emory algo we need
+MemoryAlgorithm theMemoryAlgorithm;
+// this Linekd List to be used for the first 3 memory algorithms 
+LIST * MemoryList;
 
 // If the PG is sending a new process to the scheduler, it signals it before sending
 // Then it sends the process data via a Message queue
@@ -60,6 +65,8 @@ int CompareRunningTime(void *, void *);
 int ComparePriority(void *, void *);
 int CompareRemainingTime(void *, void *);
 
+int dummy_compare(int* a,int *b);
+
 int main(int argc, char *argv[])
 {
     printf("Scheduler spawned!\n");
@@ -67,6 +74,34 @@ int main(int argc, char *argv[])
     initClk();
     // if the scheduler receives this signal, it means that the PG is sending it a new process
     signal(SIGUSR1, new_process_handler);
+    //******************************MEMORY INIT*************************//
+    theMemoryAlgorithm=FF;//todo to be changed this line
+    switch (theMemoryAlgorithm)
+    {
+    case FF:
+        MemoryList=createList(dummy_compare);
+        memory_fragment* initMem;
+        initMem= (memory_fragment*)malloc(sizeof(memory_fragment));
+        initMem->theState=GAP;
+        initMem->start_position=0;
+        initMem->length=1024;
+        //todo: function_pointer= FF algo
+        break;
+    case NF:
+
+        break;
+    case BF:
+
+        break;
+    case BSA:
+
+        break;
+
+    default:
+        break;
+    }
+
+    ///////////////////////////////////////////////////////////////////////
 
     // Initialize the queue
     PCBs = createQueue();
@@ -751,4 +786,12 @@ int ComparePriority(void *left, void *right)
         return -1;
     else
         return 0;
+}
+
+
+
+
+int dummy_compare(int* a,int *b)
+{
+    return 0;
 }
