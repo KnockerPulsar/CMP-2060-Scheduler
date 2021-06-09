@@ -73,6 +73,10 @@ int CompareRemainingTime(void *, void *);
 
 int dummy_compare(void* a,void *b);
 
+// Deallocation functions
+void deallocateMemory(int process_id);
+void deallocateMemory_BSA(int process_id);
+
 int main(int argc, char *argv[])
 {
     printf("Scheduler spawned!\n");
