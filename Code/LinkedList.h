@@ -3,31 +3,29 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-
 //*This Linked List is from Data Structures: A PseudocodeApproach with C,Second Edition*//
 //* The refrence we used in the first year in college*//
 
-
-
 //List ADT Type Defintions
-typedef struct node
+typedef struct NODE
 {
-void* dataPtr;
-struct node* link;
+    void *dataPtr;
+    struct NODE *link;
 } NODE;
 typedef struct
 {
-int count;
-NODE* pos;
-NODE* head;
-NODE* rear;
-int (*compare) (void* argu1, void* argu2);
+    int count;
+    NODE *pos;
+    NODE *head;
+    NODE *rear;
+    int (*compare)(void *argu1, void *argu2);
 } LIST;
-
 
 //Prototype Declarations
 LIST *createList(int (*compare)(void *argu1, void *argu2));
 LIST *destroyList(LIST *list);
+
+//DONT USE addnode
 int addNode(LIST *pList, void *dataInPtr);
 bool removeNode(LIST *pList,
                 void *keyPtr,
@@ -45,17 +43,23 @@ bool traverse(LIST *pList,
 int listCount(LIST *pList);
 bool emptyList(LIST *pList);
 bool fullList(LIST *pList);
-static int _insert(LIST *pList,
-                   NODE *pPre,
-                   void *dataInPtr);
-static void _delete(LIST *pList,
-                    NODE *pPre,
-                    NODE *pLoc,
-                    void **dataOutPtr);
-static bool _search(LIST *pList,
-                    NODE **pPre,
-                    NODE **pLoc,
-                    void *pArgu);
+
+//USE _insert function
+bool _insert(LIST *pList,
+             NODE *pPre,
+             void *dataInPtr);
+
+// USE _delete function
+void _delete(LIST *pList,
+             NODE *pPre,
+             NODE *pLoc,
+             void **dataOutPtr);
+
+//better search with yourself instead of this function
+bool _search(LIST *pList,
+             NODE **pPre,
+             NODE **pLoc,
+             void *pArgu);
 //End of List ADT Definitions
 
 #endif

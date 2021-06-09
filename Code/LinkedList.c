@@ -20,7 +20,7 @@ LIST *createList(int (*compare)(void *argu1, void *argu2))
         list->head = NULL;
         list->pos = NULL;
         list->rear = NULL;
-        list->count = 0;
+            
         list->compare = compare;
     } // if
     return list;
@@ -64,7 +64,7 @@ Return boolean, true if successful,
 false if memory overflow
 
 */
-static bool _insert(LIST *pList, NODE *pPre, void *dataInPtr)
+bool _insert(LIST *pList, NODE *pPre, void *dataInPtr)
 {
     //Local Definitions
     NODE *pNew;
@@ -126,6 +126,10 @@ dataOutPtr pointer to data pointer
 Post Data have been deleted and returned
 Data memory has been freed
 */
+
+
+// this function take pointr to list, pre node, the node 
+//  , pointer to point to the data inside the deleted node
 void _delete(LIST *pList, NODE *pPre,
              NODE *pLoc, void **dataOutPtr)
 {
@@ -226,7 +230,7 @@ pArgu pointer to key to be retrieved
 Post Data (pointer) passed back to caller
 Return boolean true success; false underflow
 */
-static bool retrieveNode(LIST *pList, void *pArgu, void **dataOutPtr)
+bool retrieveNode(LIST *pList, void *pArgu, void **dataOutPtr)
 {
     //Local Definitions
     bool found;
@@ -355,5 +359,3 @@ LIST *destroyList(LIST *pList)
     } // if
     return NULL;
 } // destroyList
-
-
