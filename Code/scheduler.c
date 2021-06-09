@@ -69,7 +69,7 @@ FILE *memFile;
 char *InputFileName;
 int QUANTUM;
 int memAlgo;
-
+void (*MemAlgoToRun)(void);
 // Comparison functions
 int CompareRunningTime(void *, void *);
 int ComparePriority(void *, void *);
@@ -105,7 +105,7 @@ int main(int argc, char *argv[])
 
     //******************************MEMORY INIT*************************//
 
-    void (*MemAlgoToRun)(void);
+    
     switch (memAlgo)
     {
     case FF:
@@ -341,32 +341,32 @@ void update_cpu_data(PCB *process)
 
 void output_allocate(PCB *process)
 {
-    // fprintf(memFile, "At time %d allocated %d bytes for process %d from %d to %d\n",
-    // getClk(), process->memsize, process->id,
-    // ((memory_fragment *) process->memoryNode)->start_position,
-    // ((memory_fragment *) process->memoryNode)->start_position +
-    // ((memory_fragment *) process->memoryNode)->length - 1);
-    fflush(stdin);
-    printf("At time %d allocated %d bytes for process %d from %d to %d\n",
+    fprintf(memFile, "At time %d allocated %d bytes for process %d from %d to %d\n",
     getClk(), process->memsize, process->id,
     ((memory_fragment *) process->memoryNode)->start_position,
     ((memory_fragment *) process->memoryNode)->start_position +
     ((memory_fragment *) process->memoryNode)->length - 1);
+    // fflush(stdin);
+    // printf("At time %d allocated %d bytes for process %d from %d to %d\n",
+    // getClk(), process->memsize, process->id,
+    // ((memory_fragment *) process->memoryNode)->start_position,
+    // ((memory_fragment *) process->memoryNode)->start_position +
+    // ((memory_fragment *) process->memoryNode)->length - 1);
 }
 
 void output_deallocate(PCB *process)
 {
-    // fprintf(memFile, "At time %d freed %d bytes for process %d from %d to %d\n",
-    // getClk(), process->memsize, process->id,
-    // ((memory_fragment *) process->memoryNode)->start_position,
-    // ((memory_fragment *) process->memoryNode)->start_position +
-    // ((memory_fragment *) process->memoryNode)->length - 1);
-    fflush(stdin);
-    printf("At time %d allocated %d bytes for process %d from %d to %d\n",
+    fprintf(memFile, "At time %d freed %d bytes for process %d from %d to %d\n",
     getClk(), process->memsize, process->id,
     ((memory_fragment *) process->memoryNode)->start_position,
     ((memory_fragment *) process->memoryNode)->start_position +
     ((memory_fragment *) process->memoryNode)->length - 1);
+    // fflush(stdin);
+    // printf("At time %d freed %d bytes for process %d from %d to %d\n",
+    // getClk(), process->memsize, process->id,
+    // ((memory_fragment *) process->memoryNode)->start_position,
+    // ((memory_fragment *) process->memoryNode)->start_position +
+    // ((memory_fragment *) process->memoryNode)->length - 1);
 }
 
 void new_process_handler(int signum)
@@ -465,6 +465,13 @@ void First_Come_First_Serve_Scheduling(void)
                 front_process_queue->remainingtime -= 1;
                 *memAdr = front_process_queue->remainingtime;
                 currTime = getClk();
+                
+            }
+            MemAlgoToRun();
+            if (!emptyQueue(PCBs))
+            {
+                dequeue(PCBs, (void *)&ptr_to_arriving_processes);
+                enqueue(PCB_Scheduling_Queue, (void *)ptr_to_arriving_processes);
             }
             //printf("current_time=%d",getClk());
             // blocking
@@ -472,7 +479,7 @@ void First_Come_First_Serve_Scheduling(void)
 
         //fflush(stdin);
 
-        //printf("Process with id %d finished at time %d\n", front_process_queue->pid, getClk());
+        printf("Process with id %d finished at time %d\n", front_process_queue->pid, getClk());
 
         //kill(front_process_queue->pid, SIGSTOP);
 
@@ -935,7 +942,7 @@ void First_Fit_memAlgo(void)
             memory_fragment *memory_to_cut = (memory_fragment *)(iterator_memory->dataPtr);
             
             bool flag1= (memory_to_cut->theState ==GAP);
-            int free_size=memory_to_cut->length-memory_to_cut->start_position;
+            int free_size=memory_to_cut->length; //memory_to_cut->start_position;
             bool flag2= (free_size >=process_to_allocate->memsize);
             //printf("process mem size %d\n",process_to_allocate->memsize);
             if(flag1 && flag2)
@@ -1008,24 +1015,23 @@ void Next_Fit_memAlgo(void)
     {
         if (NextPosition == NULL) //The memory list is still totally unoccupied
         {
-            printf("Here1\n");
             PCB *ptr_to_waiting_processes = (PCB *)(ProcessToBeChecked->dataPtr);
             //Remove the process from the WaitingPCBs
             //dequeue(WaitingPCBs, (void *)&ptr_to_waiting_processes);
             //Get the Next empty (and only GAP memory segment)
             memory_fragment *memory_to_cut = (memory_fragment *)(MemoryList->head->dataPtr);
-            memory_to_cut->length = memory_to_cut->length - ptr_to_waiting_processes->memsize;
-            memory_to_cut->start_position = memory_to_cut->start_position + ptr_to_waiting_processes->memsize;
-            memory_to_cut->theState = GAP;
             // Create a new memory segment
             memory_fragment *memory_needed = (memory_fragment *)malloc(sizeof(memory_fragment));
             memory_needed->theState = PROCESS;
             memory_needed->id = ptr_to_waiting_processes->id;
             memory_needed->start_position = memory_to_cut->start_position;
             memory_needed->length = ptr_to_waiting_processes->memsize;
+            ////
+            memory_to_cut->length = memory_to_cut->length - ptr_to_waiting_processes->memsize;
+            memory_to_cut->start_position = memory_to_cut->start_position + ptr_to_waiting_processes->memsize;
+            memory_to_cut->theState = GAP;
             ptr_to_waiting_processes->memoryNode = memory_needed;
             _insert(MemoryList, get_before_node(MemoryList, NextPosition), (void *)memory_needed);
-            printf("Here2\n");
             // Fork the new process, send it to the process file
             int pid = fork();
             if (pid == 0) // Child
