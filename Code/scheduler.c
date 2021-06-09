@@ -865,7 +865,7 @@ void First_Fit_memAlgo(void)
             bool flag1 = (memory_to_cut->theState == GAP);
             int free_size = memory_to_cut->length - memory_to_cut->start_position;
             bool flag2 = (free_size == process_to_allocate->memsize);
-            if (flag1 == flag2)
+            if (flag1 && flag2)
             {
                 // take the needed part now ;
                 memory_fragment *memory_needed = (memory_fragment *)malloc(sizeof(memory_fragment));
@@ -885,7 +885,6 @@ void First_Fit_memAlgo(void)
                 //needed to make the PCB point to  its node in memory
                 process_to_allocate->memoryNode = (void *)memory_needed;
                 // needed to enqueue in pcb
-                
 
                 // Fork the new process, send it to the process file
                 int pid = fork();
@@ -896,7 +895,7 @@ void First_Fit_memAlgo(void)
 
                 //Pause the process that we just forked
                 kill(pid, SIGSTOP);
-                process_to_allocate->pid=pid;
+                process_to_allocate->pid = pid;
                 enqueue(PCBs, (void *)process_to_allocate);
 
                 isForked = 1;
@@ -907,8 +906,8 @@ void First_Fit_memAlgo(void)
         NODE *next_process = iterator_processes->link;
         if (isForked)
         {
-            PCB *dummyPTR;
-            _delete(WaitingPCBs, get_before_node(WaitingPCBs, iterator_processes), iterator_processes, &dummyPTR);
+            void *dummyPTR;
+            _delete(WaitingPCBs, get_before_node(WaitingPCBs, iterator_processes), iterator_processes, &(dummyPTR));
         }
         iterator_processes = next_process;
     }
