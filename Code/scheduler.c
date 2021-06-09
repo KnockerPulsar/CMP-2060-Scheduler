@@ -826,11 +826,18 @@ void First_Fit_memAlgo(void)
     while (iterator_processes)
     {
         //logic for first fit
-       // PCB * temp_process=
+       PCB * temp_process= (PCB*)iterator_processes;
         while (iterator_memory)
         {
             memory_fragment *temp_memory = (memory_fragment *)(iterator_memory->dataPtr);
-        
+            bool flag1= (temp_memory->theState ==GAP);
+            int free_size=temp_memory->length-temp_memory->start_position;
+            bool flag2= (free_size ==temp_process->memsize);
+            if(flag1==flag2)
+            {
+                // take the needed part now ;
+
+            }
         }
     }
 

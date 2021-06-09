@@ -359,3 +359,22 @@ LIST *destroyList(LIST *pList)
     } // if
     return NULL;
 } // destroyList
+
+
+
+//added by hadidy 
+
+NODE* get_before_node(LIST* theList,NODE* givenNode)
+{
+    NODE* iterator=theList->head;
+    while (iterator->link != givenNode)
+    {
+        iterator=iterator->link;
+    }
+    return iterator;
+    
+
+}
+
+
+
