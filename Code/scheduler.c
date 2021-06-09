@@ -924,13 +924,12 @@ void First_Fit_memAlgo(void)
 
                 memory_to_cut->length -= memory_needed->length;
                 memory_to_cut->start_position = new_beginnig;
-
+                printf("pre insert\n");
                 _insert(MemoryList, get_before_node(MemoryList, iterator_memory), (void *)memory_needed);
-
+                printf("post insert\n");
                 //needed to make the PCB point to  its node in memory
                 process_to_allocate->memoryNode = (void *)memory_needed;
                 // needed to enqueue in pcb
-                
 
                 // Fork the new process, send it to the process file
                 int pid = fork();
@@ -941,10 +940,10 @@ void First_Fit_memAlgo(void)
 
                 //Pause the process that we just forked
                 kill(pid, SIGSTOP);
-                process_to_allocate->pid=pid;
+                process_to_allocate->pid = pid;
                 enqueue(PCBs, (void *)process_to_allocate);
                 output_allocate(process_to_allocate);
-
+                printf("done forking");
                 isForked = 1;
                 break;
             }
@@ -953,8 +952,8 @@ void First_Fit_memAlgo(void)
         NODE *next_process = iterator_processes->link;
         if (isForked)
         {
-            PCB *dummyPTR;
-            _delete(WaitingPCBs, get_before_node(WaitingPCBs, iterator_processes), iterator_processes, &dummyPTR);
+            void *dummyPTR;
+            _delete(WaitingPCBs, get_before_node(WaitingPCBs, iterator_processes), iterator_processes, &(dummyPTR));
         }
         iterator_processes = next_process;
     }
