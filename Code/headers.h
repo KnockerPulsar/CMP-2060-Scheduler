@@ -69,7 +69,8 @@ typedef struct processData
     int priority;
     int runningtime;  
     int id;
-    //int remainning_time
+    //int remaining_time
+    int memsize;
 } processData;
 
 // Message buffer for communication between Process Generator & the Scheduler
