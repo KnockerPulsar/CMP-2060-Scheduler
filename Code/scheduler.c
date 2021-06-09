@@ -55,6 +55,7 @@ void Round_Robin_Scheduling(void);
 
 // Memory Algorithms
 void First_Fit_memAlgo(void);
+void Next_Fit_memAlgo(void);
 
 // Variables used for output files
 float CPU_util;
@@ -121,7 +122,13 @@ int main(int argc, char *argv[])
         //todo: function_pointer= FF algo
         break;
     case NF:
-
+        MemoryList = createList(&dummy_compare);
+        initMem = (memory_fragment *)malloc(sizeof(memory_fragment));
+        initMem->theState = GAP;
+        initMem->start_position = 0;
+        initMem->length = 1024;
+        _insert(MemoryList, MemoryList->rear, (void *)initMem);
+        MemAlgoToRun = &Next_Fit_memAlgo;
         break;
     case BF:
 
@@ -397,6 +404,8 @@ void new_process_handler(int signum)
         //enqueue(WaitingPCBs, (void *) tempPCB);
         _insert(WaitingPCBs, WaitingPCBs->rear, (void *)tempPCB);
 
+        //printf("mem size %d\n" ,( (PCB *) WaitingPCBs->head->dataPtr)->memsize );
+
         //printf("process with id %d needs memory %d\n", tempPCB->id, tempPCB->memsize);
         // Add this process to the new processes queue
         // The selected Algo can then take this new process and add it
@@ -538,6 +547,8 @@ void Shortest_Job_First_Scheduling(void)
 
         output_finished(front_process_queue);
 
+        output_deallocate(front_process_queue);
+
         if (memAlgo != BSA)
             deallocateMemory(front_process_queue->id);
         else
@@ -628,10 +639,13 @@ void Shortest_Remaining_Time_Next_Scheduling(void)
 
             update_cpu_data(front_process_queue);
 
+            output_deallocate(front_process_queue);
+
             if (memAlgo != BSA)
                 deallocateMemory(front_process_queue->id);
             else
                 deallocateMemory_BSA(front_process_queue->id);
+
 
             // Delete the allocated data for this PCB
             free(front_process_queue);
@@ -693,6 +707,8 @@ void Round_Robin_Scheduling(void)
             //printf("process with id %d is now finishing at time %d\n", front_process_queue->id, getClk());
             output_finished(front_process_queue);
             update_cpu_data(front_process_queue);
+
+            output_deallocate(front_process_queue);
 
             if (memAlgo != BSA)
                 deallocateMemory(front_process_queue->id);
@@ -827,6 +843,8 @@ void PreemptiveHighestPriorityFirst()
             update_cpu_data(currentRunning);
             dequeue(PCB_Scheduling_Queue, (void *)(&dequeuePtr));
 
+            output_deallocate(dequeuePtr);
+
             if (memAlgo != BSA)
                 deallocateMemory(dequeuePtr->id);
             else
@@ -911,14 +929,16 @@ void First_Fit_memAlgo(void)
     {
         isForked = 0;
         //logic for first fit
-        PCB *process_to_allocate = (PCB *)iterator_processes;
+        PCB *process_to_allocate = (PCB *)iterator_processes->dataPtr;
         while (iterator_memory)
         {
             memory_fragment *memory_to_cut = (memory_fragment *)(iterator_memory->dataPtr);
-            bool flag1 = (memory_to_cut->theState == GAP);
-            int free_size = memory_to_cut->length - memory_to_cut->start_position;
-            bool flag2 = (free_size >= process_to_allocate->memsize);
-            if (flag1 && flag2)
+            
+            bool flag1= (memory_to_cut->theState ==GAP);
+            int free_size=memory_to_cut->length-memory_to_cut->start_position;
+            bool flag2= (free_size >=process_to_allocate->memsize);
+            //printf("process mem size %d\n",process_to_allocate->memsize);
+            if(flag1 && flag2)
             {
                 // take the needed part now ;
                 memory_fragment *memory_needed = (memory_fragment *)malloc(sizeof(memory_fragment));
@@ -968,6 +988,8 @@ void First_Fit_memAlgo(void)
     // algorithm to to allocate and then
 }
 
+
+
 void Next_Fit_memAlgo(void)
 {
     // Loop Starting the next available fit.
@@ -986,11 +1008,11 @@ void Next_Fit_memAlgo(void)
     {
         if (NextPosition == NULL) //The memory list is still totally unoccupied
         {
-            PCB *ptr_to_waiting_processes = (PCB *)(WaitingPCBs->head->dataPtr);
+            PCB *ptr_to_waiting_processes = (PCB *)(ProcessToBeChecked->dataPtr);
             //Remove the process from the WaitingPCBs
             //dequeue(WaitingPCBs, (void *)&ptr_to_waiting_processes);
             //Get the Next empty (and only GAP memory segment)
-            memory_fragment *memory_to_cut = (memory_fragment *)(NextPosition->dataPtr);
+            memory_fragment *memory_to_cut = (memory_fragment *)(MemoryList->head->dataPtr);
             memory_to_cut->length = memory_to_cut->length - ptr_to_waiting_processes->memsize;
             memory_to_cut->start_position = memory_to_cut->start_position + ptr_to_waiting_processes->memsize;
             memory_to_cut->theState = GAP;
@@ -1012,7 +1034,7 @@ void Next_Fit_memAlgo(void)
             kill(pid, SIGSTOP);
             ptr_to_waiting_processes->pid = pid;
             void *dummyPTR;
-            _delete(WaitingPCBs, get_before_node(WaitingPCBs, ptr_to_waiting_processes), ptr_to_waiting_processes, &(dummyPTR));
+            _delete(WaitingPCBs, get_before_node(WaitingPCBs,ProcessToBeChecked), ProcessToBeChecked, &(dummyPTR));
             //Insert it into the PCBs Queue
             if (theAlgorithm == SJF)
                 enqueue_sorted(PCBs, (void *)ptr_to_waiting_processes, CompareRunningTime);
@@ -1069,7 +1091,7 @@ void Next_Fit_memAlgo(void)
                 ptr_to_waiting_processes->pid = pid;
                 ProcessToBeChecked = ProcessToBeChecked->link;
                 void *dummyPTR;
-                _delete(WaitingPCBs, get_before_node(WaitingPCBs, ptr_to_waiting_processes), ptr_to_waiting_processes, &(dummyPTR));
+                _delete(WaitingPCBs, get_before_node(WaitingPCBs, ProcessToBeChecked), ProcessToBeChecked, &(dummyPTR));
                 //Insert it into the PCBs Queue
                 if (theAlgorithm == SJF)
                     enqueue_sorted(PCBs, (void *)ptr_to_waiting_processes, CompareRunningTime);
@@ -1081,6 +1103,11 @@ void Next_Fit_memAlgo(void)
                 break;
             }
             NextPosition = NextPosition->link;
+            if(NextPosition == NULL)
+                NextPosition = MemoryList->head;
+            CheckForFullLoop--;
+            if(CheckForFullLoop == 0)
+                break;
         }
         ProcessToBeChecked = ProcessToBeChecked->link;
     }
