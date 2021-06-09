@@ -525,7 +525,10 @@ void Round_Robin_Scheduling(void)
         kill(front_process_queue->pid, SIGCONT);
         *memAdr = front_process_queue->remainingtime;
 
-        output_started(front_process_queue);
+        if (front_process_queue->remainingtime < front_process_queue->runningtime)
+            output_resumed(front_process_queue);
+        else
+            output_started(front_process_queue);
 
         // the loop will continue until the QUANTUM is finished or the time of queue is finished
         while (currTime < (time_at_entry + QUANTUM) && front_process_queue->remainingtime != 0)
@@ -629,7 +632,10 @@ void PreemptiveHighestPriorityFirst()
             currentRunning = newProc;
             *memAdr = currentRunning->remainingtime;
             kill(currentRunning->pid, SIGCONT);
-            output_started(currentRunning);
+            if (currentRunning->remainingtime < currentRunning->runningtime)
+                output_resumed(currentRunning);
+            else
+                output_started(currentRunning);
         }
         else
         {
@@ -644,7 +650,10 @@ void PreemptiveHighestPriorityFirst()
                 currentRunning = newProc;
                 *memAdr = currentRunning->remainingtime;
                 kill(currentRunning->pid, SIGCONT);
-                output_started(currentRunning);
+                if (currentRunning->remainingtime < currentRunning->runningtime)
+                    output_resumed(currentRunning);
+                else
+                    output_started(currentRunning);
             }
             // If its priority is less, just enqueue
             enqueue_sorted(PCB_Scheduling_Queue, (void *)newProc, ComparePriority);
@@ -679,7 +688,10 @@ void PreemptiveHighestPriorityFirst()
                 printf("%s", "There are other processes left, dequeuing one\n");
                 currentRunning = dequeuePtr;
                 *memAdr = currentRunning->remainingtime;
-                output_started(currentRunning);
+                if (currentRunning->remainingtime < currentRunning->runningtime)
+                    output_resumed(currentRunning);
+                else
+                    output_started(currentRunning);
                 kill(currentRunning->pid, SIGCONT);
             }
         }
