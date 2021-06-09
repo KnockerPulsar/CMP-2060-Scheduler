@@ -852,16 +852,29 @@ void First_Fit_memAlgo(void)
     while (iterator_processes)
     {
         //logic for first fit
-       PCB * temp_process= (PCB*)iterator_processes;
+       PCB * process_to_allocate= (PCB*)iterator_processes;
         while (iterator_memory)
         {
-            memory_fragment *temp_memory = (memory_fragment *)(iterator_memory->dataPtr);
-            bool flag1= (temp_memory->theState ==GAP);
-            int free_size=temp_memory->length-temp_memory->start_position;
-            bool flag2= (free_size ==temp_process->memsize);
+            memory_fragment *memory_to_cut = (memory_fragment *)(iterator_memory->dataPtr);
+            bool flag1= (memory_to_cut->theState ==GAP);
+            int free_size=memory_to_cut->length-memory_to_cut->start_position;
+            bool flag2= (free_size ==process_to_allocate->memsize);
             if(flag1==flag2)
             {
                 // take the needed part now ;
+                memory_fragment * memory_needed=(memory_fragment *)malloc(sizeof(memory_fragment));
+                memory_needed->theState=PROCESS;
+                memory_needed->start_position=memory_to_cut->start_position;
+                memory_needed->length=process_to_allocate->memsize;
+                memory_needed->id=process_to_allocate->id;
+
+                int new_beginnig=memory_needed->start_position+memory_needed->length;
+                new_beginnig++;
+
+                memory_to_cut->length -= memory_needed->length;
+                memory_to_cut->start_position=new_beginnig;
+
+                _insert(MemoryList,get_before_node(MemoryList,iterator_memory),(void*)memory_needed);
 
             }
         }
