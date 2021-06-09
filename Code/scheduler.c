@@ -3,10 +3,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define QUANTUM 3
+//#define QUANTUM 3
 
-// TODO: Finish the other scheduling algorithms in the same way as the FCFS
-// TODO: Work on the output data
+// TODO: Finish the other scheduling algorithms in the same way as the FCFS --> Done
+// TODO: Work on the output data --> Done
 // TODO: in PG, clear all IPC recources
 
 // Variables for communication between the PG & the scheduler
@@ -49,6 +49,7 @@ float weighted_turnaround_time;
 FILE *logFile;
 FILE *perfFile;
 char *InputFileName;
+int QUANTUM;
 
 int *Waiting;
 int *Running;
@@ -87,6 +88,13 @@ int main(int argc, char *argv[])
 
     printf("S_P_MQid = %d\n", S_P_ShMemid);
 
+    // printf("All the arguments received: ");
+    // for (int i = 0; i < argc; i++)
+    // {
+    //     printf("%s ", argv[i]);
+    // }
+    // printf("\n");
+
     // Output file variables
     //LOG = createQueue();
     //PERF = createQueue();
@@ -95,8 +103,7 @@ int main(int argc, char *argv[])
     total_run_time = 0;
     numOfProcs = atoi(argv[2]);
 
-    //InputFileName = argv[1];      //Uncomment after changing the project structure
-
+    InputFileName = argv[3]; //Uncomment after changing the project structure --> Probably won't need it anyway
     //Uncomment after changing the project structure --> Used to count the number of processes
     // FILE *ptrToFile;
     // numOfProcs = 0;
@@ -137,6 +144,12 @@ int main(int argc, char *argv[])
     //5. Round Robin (RR)
     // we should determine the algo from the args in process generator
     theAlgorithm = atoi(argv[1]);
+    if (theAlgorithm == RR)
+        QUANTUM = atoi(argv[4]);
+    else
+        QUANTUM = 0;
+
+    //printf("Quantum= %d\n", QUANTUM);
 
     // This switch case will be used to make
     // The necessary initializations for each algorithm
@@ -265,7 +278,7 @@ void new_process_handler(int signum)
         int pid = fork();
         if (pid == 0) // Child
         {
-            execl("bin/process", "process", (char *)NULL);
+            execl("process", "process", (char *)NULL);
         }
 
         // Pause the process that we just forked
@@ -447,11 +460,11 @@ void Shortest_Remaining_Time_Next_Scheduling(void)
         // }
         // printf("%s", "\n");
         PCB *front_process_queue;
-        dequeue(PCB_Scheduling_Queue, (void *)&front_process_queue);        
+        dequeue(PCB_Scheduling_Queue, (void *)&front_process_queue);
 
         kill(front_process_queue->pid, SIGCONT);
-        
-        if(front_process_queue->remainingtime < front_process_queue->runningtime)
+
+        if (front_process_queue->remainingtime < front_process_queue->runningtime)
             output_resumed(front_process_queue);
         else
             output_started(front_process_queue);

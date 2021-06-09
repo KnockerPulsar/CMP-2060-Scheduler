@@ -45,6 +45,7 @@ processData *ReadSimData(char *filePath);
 
 // Global variables
 int lines;
+char* Quantum;
 
 /* ============================================================================================= */
 
@@ -86,7 +87,11 @@ int main(int argc, char *argv[])
     // 2. Read the chosen scheduling algorithm and its parameters, if there are any from the argument list.
     /* ============================================================================================= */
 
-    char *schedulingAlg = argv[2];
+    char *schedulingAlg = argv[3];
+    if(atoi(schedulingAlg) == RR)
+        Quantum = argv[5];
+    //else
+        //sprintf(Quantum, "%d", 0);
 
     // TODO: PUT A FUNCTION HERE TO READ IN THE REQUIRED PARAMETERS FOR EACH SCHEDULING ALGORITHM.
 
@@ -118,7 +123,7 @@ int main(int argc, char *argv[])
     }
     else
     {
-        printf("PROCESS GENERATOR: PROCESS SHARED MEMEORY CREATED SUCCESSFULLY WITH ID %d\n", SchedProcShMemID);
+        printf("PROCESS GENERATOR: PROCESS SHARED MEMORY CREATED SUCCESSFULLY WITH ID %d\n", SchedProcShMemID);
     }
 
     // 3. Initiate and create the scheduler and clock processes.
@@ -139,7 +144,7 @@ int main(int argc, char *argv[])
             case ClockChild:
             {
                 printf("Clock child!\n");
-                execl("bin/clk", "clk", (char *)NULL);
+                execl("clk", "clk", (char *)NULL);
                 break;
             }
             case SchedChild:
@@ -154,7 +159,8 @@ int main(int argc, char *argv[])
                 char * str = malloc( sizeof(char) * (c + 1) );
                 sprintf(str, "%d", lines);
                 printf("Scheduler child!\n");
-                execl("bin/scheduler", "scheduler", schedulingAlg, str, (char *) NULL);
+                execl("scheduler", "scheduler", schedulingAlg, str, pDataPath, Quantum,(char *) NULL);
+                //execl("scheduler", "scheduler", schedulingAlg, str, (char *) NULL);
                 free(str);
                 break;
             }
@@ -223,7 +229,7 @@ processData *ReadSimData(char *filePath)
         exit(-1);
     }
 
-    const int buffSize = 32; // For readiblility
+    const int buffSize = 32; // For readability
     lines = 0;
     int readChars;             // To store the number of lines and how many chars were read
     size_t lineLen = buffSize; // To tell getline() the size of our buffer.
