@@ -257,7 +257,7 @@ processData *ReadSimData(char *filePath)
     // Allocating the buffer and creating a pointer to the start since getline() doesn't like passing
     // the char array...
     char line[buffSize], *linePtr = line;
-    
+
     // First parameter is a reference to a string, where the line will be returned
     // Second one is the length of the string of avoid overflows I guess
     // Third parameter is the filestream we're reading from
