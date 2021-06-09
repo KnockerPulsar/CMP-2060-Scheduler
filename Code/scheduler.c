@@ -849,8 +849,10 @@ void First_Fit_memAlgo(void)
 {
     NODE *iterator_processes = WaitingPCBs->head;
     NODE *iterator_memory = MemoryList->head;
+    bool isForked=0;
     while (iterator_processes)
     {
+        isForked=0;
         //logic for first fit
        PCB * process_to_allocate= (PCB*)iterator_processes;
         while (iterator_memory)
@@ -875,9 +877,18 @@ void First_Fit_memAlgo(void)
                 memory_to_cut->start_position=new_beginnig;
 
                 _insert(MemoryList,get_before_node(MemoryList,iterator_memory),(void*)memory_needed);
-
+                isForked=1;
+                break;
             }
+            iterator_memory=iterator_memory->link;
         }
+        NODE* next_process=iterator_processes->link;
+        if(isForked)
+        {
+            PCB * dummyPTR;
+            _delete(WaitingPCBs,get_before_node(WaitingPCBs,iterator_processes),iterator_processes,&dummyPTR);
+        }
+        iterator_processes=next_process;
     }
 
     // itterate on waitnngPCB and then fill PCB
