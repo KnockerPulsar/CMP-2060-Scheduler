@@ -24,7 +24,7 @@ QUEUE *PCB_Scheduling_Queue;
 QUEUE *PCBs;
 
 // Contains all processes that are waiting to be allocated
-QUEUE *WaitingPCBs;
+LIST *WaitingPCBs;
 
 //Used to store the Algorithm number. If this number is equal to 2 then elements are enqueued sorted by Running time in PCBs
 // If this number is equal to 4 then elements are enqueued sorted by Remaining time in PCBs
@@ -71,7 +71,7 @@ int CompareRunningTime(void *, void *);
 int ComparePriority(void *, void *);
 int CompareRemainingTime(void *, void *);
 
-int dummy_compare(int* a,int *b);
+int dummy_compare(void* a,void *b);
 
 int main(int argc, char *argv[])
 {
@@ -85,7 +85,7 @@ int main(int argc, char *argv[])
     switch (memAlgo)
     {
     case FF:
-        MemoryList=createList(dummy_compare);
+        MemoryList=createList(&dummy_compare);
         memory_fragment* initMem;
         initMem= (memory_fragment*)malloc(sizeof(memory_fragment));
         initMem->theState=GAP;
@@ -110,6 +110,9 @@ int main(int argc, char *argv[])
     }
 
     ///////////////////////////////////////////////////////////////////////
+    //itnialise the linked list of coming unAllocated processes
+
+    WaitingPCBs=createList(&dummy_compare);
 
     // Initialize the queue
     PCBs = createQueue();
@@ -345,7 +348,8 @@ void new_process_handler(int signum)
         tempPCB->memsize = processGenBuffer.P.memsize;      
         //fflush(stdin);
         //printf("Remaining time %d\n", tempPCB->remainingtime);
-        enqueue(WaitingPCBs, (void *) tempPCB);
+        //enqueue(WaitingPCBs, (void *) tempPCB);
+        _insert(WaitingPCBs,WaitingPCBs->rear,(void*)tempPCB); 
 
         // Add this process to the new processes queue
         // The selected Algo can then take this new process and add it
@@ -836,7 +840,7 @@ int ComparePriority(void *left, void *right)
 
 
 
-int dummy_compare(int* a,int *b)
+int dummy_compare(void* a,void *b)
 {
     return 0;
 }
@@ -845,7 +849,13 @@ int dummy_compare(int* a,int *b)
 
 void First_Fit_memAlgo(void)
 {
-    // itterate on prePCB and then fill PCB
+    LIST *iterator=WaitingPCBs->head;
+    while (iterator)
+    {
+        //logic for first fit
+    }
+    
+    // itterate on waitnngPCB and then fill PCB
     // algorithm to to allocate and then
 }
 

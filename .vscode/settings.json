@@ -10,7 +10,8 @@
         "functional": "c",
         "tuple": "c",
         "utility": "c",
-        "cmath": "c"
+        "cmath": "c",
+        "buddybinarytree.h": "c"
     },
     "cSpell.words": [
         "MEMEORY",
