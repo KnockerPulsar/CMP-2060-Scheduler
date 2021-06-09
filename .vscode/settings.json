@@ -11,7 +11,7 @@
         "tuple": "c",
         "utility": "c",
         "cmath": "c",
-        "linkedlist.h": "c"
+        "buddybinarytree.h": "c"
     },
     "cSpell.words": [
         "MEMEORY",
