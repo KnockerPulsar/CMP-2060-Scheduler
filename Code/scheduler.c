@@ -47,6 +47,13 @@ void PreemptiveHighestPriorityFirst(void);
 void Shortest_Remaining_Time_Next_Scheduling(void);
 void Round_Robin_Scheduling(void);
 
+
+// Memory Algorithms 
+
+void First_Fit_memAlgo(void);
+
+
+
 // Variables used for output files
 float CPU_util;
 int total_run_time;
@@ -84,7 +91,7 @@ int main(int argc, char *argv[])
         initMem->theState=GAP;
         initMem->start_position=0;
         initMem->length=1024;
-        
+        MemAlgoToRun=&First_Fit_memAlgo;
         //todo: function_pointer= FF algo
         break;
     case NF:
@@ -227,6 +234,7 @@ int main(int argc, char *argv[])
 
     while (numOfProcs > 0)
     {
+        MemAlgoToRun();
         AlgoToRun();
     }
 
@@ -804,3 +812,24 @@ int dummy_compare(int* a,int *b)
 {
     return 0;
 }
+////////////////////////////////////////////////////////////////////////
+///////////////////////MEMORY ALGO///////////////////////////////////
+
+void First_Fit_memAlgo(void)
+{
+    // itterate on prePCB and then fill PCB
+    // algorithm to to allocate and then
+}
+
+
+void  deallocateMemory(int process_id) // only called for ff,nf,bf 
+{
+    //itterate on the list untif find process_id
+}
+
+void deallocateMemory_BSA(int process_id) //ony for BSA
+{
+
+}
+
+

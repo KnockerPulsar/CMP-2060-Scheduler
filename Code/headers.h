@@ -127,8 +127,8 @@ typedef struct memory_fragment
 {
     int start_position;
     int length;
-    int id;
     mem_state theState;
+    int id;
 
 }memory_fragment;
 
