@@ -20,7 +20,7 @@ LIST *createList(int (*compare)(void *argu1, void *argu2))
         list->head = NULL;
         list->pos = NULL;
         list->rear = NULL;
-        list->count = 0;
+            
         list->compare = compare;
     } // if
     return list;
@@ -126,6 +126,10 @@ dataOutPtr pointer to data pointer
 Post Data have been deleted and returned
 Data memory has been freed
 */
+
+
+// this function take pointr to list, pre node, the node 
+//  , pointer to point to the data inside the deleted node
 void _delete(LIST *pList, NODE *pPre,
              NODE *pLoc, void **dataOutPtr)
 {
