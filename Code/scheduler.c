@@ -418,6 +418,9 @@ void First_Come_First_Serve_Scheduling(void)
         output_finished(front_process_queue);
 
         free(front_process_queue);
+        /*
+        
+        */
         numOfProcs--;
     }
 }
