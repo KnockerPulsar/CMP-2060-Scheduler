@@ -1351,7 +1351,7 @@ void deallocateMemory_BSA(int process_id) //ony for BSA
 
             // Delete the process data
             void *dummyPtr;
-            _delete(MemoryList, get_before_node(MemoryList, procToDelete), procToDelete, &dummyPtr);
+            _delete(MemoryList, get_before_node(MemoryList, procInMem), procInMem, &dummyPtr);
 
             break;
         }
