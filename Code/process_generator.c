@@ -103,6 +103,7 @@ int main(int argc, char *argv[])
 
     char *schedulingAlg = argv[3];
 
+    printf("The memory size of each process =%ld\n",sizeof(PCB));
 
     if(atoi(schedulingAlg) == RR)
         Quantum = argv[5];

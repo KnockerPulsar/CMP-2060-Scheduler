@@ -9,3 +9,5 @@ src/p.o
 test_generator.out
 queue.o
 scheduler.o
+Code/process_generator.o
+Code/scheduler
